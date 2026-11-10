@@ -1,0 +1,25 @@
+# Build products
+Forge/tzforge
+Forge/tzforge-debug
+Tests/build/
+*.dSYM/
+*.part
+DerivedData/
+build/
+*.ipa
+*.xcarchive
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+.swiftpm/
+
+# macOS
+.DS_Store
+
+# Map data never belongs in git
+*.osm.pbf
+!Tests/data/helsinki.osm.pbf
+*.pmtiles
+*.vmap/
