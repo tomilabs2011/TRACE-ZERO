@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Lets the app appear in CarPlay as a navigation app. Apple grants this
+	     entitlement on request; a free Apple ID cannot sign with it. On a
+	     jailbroken phone Tools/build-ipa.sh fake-signs the app with it.
+	     See docs/CARPLAY.md. -->
+	<key>com.apple.developer.carplay-maps</key>
+	<true/>
+</dict>
+</plist>
