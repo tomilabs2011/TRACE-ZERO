@@ -31,7 +31,7 @@ static void usage(void)
         "usage:\n"
         "  tzforge build  <input.osm.pbf> <pack.vmap> [--name NAME] [--id ID] [--source URL]\n"
         "                 [--profiles car,bike,foot] [--no-search] [--progress]\n"
-        "  tzforge route  <pack.vmap> <car|bike|foot> <lat,lon> <lat,lon> [--heading DEG]\n"
+        "  tzforge route  <pack.vmap> <car|bike|foot> <lat,lon> <lat,lon> [--heading DEG] [--geojson]\n"
         "  tzforge search <pack.vmap> <query> [--near lat,lon]\n"
         "  tzforge verify <pack.vmap> [--pairs N]\n"
         "  tzforge info   <pack.vmap>\n");
@@ -259,9 +259,11 @@ static int cmd_route(int argc, char **argv)
     memset(&a, 0, sizeof a);
     memset(&z, 0, sizeof z);
     a.heading = z.heading = -1;
+    int geojson = 0;
     if (!parse_latlon(argv[2], &a.lat, &a.lon) || !parse_latlon(argv[3], &z.lat, &z.lon)) fz_die("bad coordinate");
     for (int i = 4; i < argc; i++) {
         if (!strcmp(argv[i], "--heading") && i + 1 < argc) a.heading = atof(argv[++i]);
+        else if (!strcmp(argv[i], "--geojson")) geojson = 1;
         else usage();
     }
     char *rp = join_path(argv[0], "roads.tzr"), *gp = join_path(argv[0], PROFILE_FILES[p]);
@@ -273,6 +275,29 @@ static int cmd_route(int argc, char **argv)
     tz_route *rt;
     st = tz_route_compute(g, &a, &z, &rt);
     if (st != TZ_OK) { printf("no route: %s\n", tz_status_message(st)); return 1; }
+    if (geojson) {
+        /* the route line and one point per maneuver, for viewers and tests */
+        printf("{\"type\":\"FeatureCollection\",\"features\":[{\"type\":\"Feature\",\"properties\":"
+               "{\"distance\":%.1f,\"duration\":%.1f},\"geometry\":{\"type\":\"LineString\",\"coordinates\":[",
+               rt->distance_m, rt->duration_s);
+        for (uint32_t i = 0; i < rt->npts; i++) printf("%s[%.6f,%.6f]", i ? "," : "", rt->lon[i], rt->lat[i]);
+        printf("]}}");
+        char buf[256];
+        for (uint32_t i = 0; i < rt->nman; i++) {
+            const tz_maneuver *m = &rt->man[i];
+            printf(",{\"type\":\"Feature\",\"properties\":{\"maneuver\":%u,\"text\":", i);
+            json_str(stdout, man_text(m, buf, sizeof buf));
+            printf("},\"geometry\":{\"type\":\"Point\",\"coordinates\":[%.6f,%.6f]}}",
+                   rt->lon[m->point], rt->lat[m->point]);
+        }
+        printf("]}\n");
+        tz_route_free(rt);
+        tz_graph_close(g);
+        tz_roads_close(r);
+        free(rp);
+        free(gp);
+        return 0;
+    }
     printf("distance %.0f m, duration %.0f s, %u points, %u maneuvers, %u nodes settled, %.2f ms\n",
            rt->distance_m, rt->duration_s, rt->npts, rt->nman, rt->settled, rt->compute_ms);
     char buf[256];
