@@ -23,20 +23,52 @@ final class PackStore {
 
     private init() {}
 
-    /// Rescans Documents. Cheap: only manifests are read.
+    /// What the last scan saw at the top of Documents (shown on the Map
+    /// packs screen, so a pack copied to the wrong place is easy to spot).
+    private(set) var documentNames: [String] = []
+    private(set) var scanError: String?
+
+    /// Rescans Documents. Cheap: only manifests are read. Packs are found
+    /// at the top level and one folder deeper (e.g. Documents/Maps/x.vmap).
     func reload() {
         let fm = FileManager.default
-        let items = (try? fm.contentsOfDirectory(at: documents, includingPropertiesForKeys: [.isDirectoryKey],
-                                                 options: [.skipsHiddenFiles])) ?? []
+        func list(_ dir: URL) -> [URL] {
+            return ((try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.isDirectoryKey],
+                                                 options: [.skipsHiddenFiles])) ?? [])
+                .sorted { $0.lastPathComponent < $1.lastPathComponent }
+        }
+        func isDirectory(_ u: URL) -> Bool {
+            var isDir: ObjCBool = false
+            return fm.fileExists(atPath: u.path, isDirectory: &isDir) && isDir.boolValue
+        }
+        func looksLikePack(_ u: URL) -> Bool {
+            return u.pathExtension.lowercased() == "vmap" ||
+                fm.fileExists(atPath: u.appendingPathComponent("manifest.json").path)
+        }
+
+        do {
+            _ = try fm.contentsOfDirectory(atPath: documents.path)
+            scanError = nil
+        } catch {
+            scanError = error.localizedDescription
+        }
+        let top = list(documents)
+        documentNames = top.map { $0.lastPathComponent + (isDirectory($0) ? "/" : "") }
+
+        var candidates: [URL] = []
+        for item in top where isDirectory(item) {
+            if looksLikePack(item) {
+                candidates.append(item)
+            } else {
+                candidates.append(contentsOf: list(item).filter { isDirectory($0) && looksLikePack($0) })
+            }
+        }
+
         var found: [MapPack] = []
         var bad: [Problem] = []
         // Keep already loaded packs (and their open files) when nothing changed.
         let existing = Dictionary(packs.map { ($0.url.standardizedFileURL.path, $0) }, uniquingKeysWith: { a, _ in a })
-        for item in items.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
-            var isDir: ObjCBool = false
-            guard fm.fileExists(atPath: item.path, isDirectory: &isDir), isDir.boolValue else { continue }
-            let hasManifest = fm.fileExists(atPath: item.appendingPathComponent("manifest.json").path)
-            guard item.pathExtension == "vmap" || hasManifest else { continue }
+        for item in candidates {
             excludeFromBackup(item)
             if let old = existing[item.standardizedFileURL.path], manifestUnchanged(old) {
                 found.append(old)

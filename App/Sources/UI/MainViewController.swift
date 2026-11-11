@@ -134,6 +134,8 @@ final class MainViewController: UIViewController {
                 "and drag a .vmap folder onto TRACE//ZERO."
             if !store.problems.isEmpty {
                 text += "\n\n" + store.problems.map { "\($0.folder): \($0.message)" }.joined(separator: "\n")
+            } else if !store.documentNames.isEmpty {
+                text += "\n\nIn the app's folder: " + store.documentNames.prefix(6).joined(separator: ", ")
             }
             emptyNotice.attributedText = NSAttributedString(string: text, attributes: [
                 .font: Theme.font(14, weight: .demi), .foregroundColor: Theme.cyan])
