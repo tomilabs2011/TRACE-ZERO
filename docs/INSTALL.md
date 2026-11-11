@@ -8,13 +8,41 @@ The app targets iOS 12.0 so it runs on the iPhone 5s.
 
 | Xcode | Can build for iOS 12? | Notes |
 |---|---|---|
-| 15.x, 16.x | yes | Supported deployment targets go down to iOS 12. |
-| 26.x | yes | Officially documents iOS 15 as the floor, but still accepts 12.0. |
-| 27 (beta) | no | Reported to reject deployment targets below 15. |
+| 15.x, 16.x | yes | |
+| 26.x | yes | iOS 12 is below its official floor (15), but it only warns. |
+| 27 and later | **no** | The build fails: Xcode 27 supports iOS 15 to 27 only. |
+
+The Mac map builder (MapForge) and `tzforge` are not affected: they build
+with any of these, including Xcode 27.
+
+### If you have Xcode 27
+
+Keep Xcode 27 and install Xcode 26 next to it, used only to build the
+iPhone app:
+
+1. Download Xcode 26.x (the last 26 release) from
+   https://developer.apple.com/download/all/ with your free Apple ID.
+2. Unpack it and rename it to `Xcode-26.app` in `/Applications`, so it sits
+   beside `Xcode.app` instead of replacing it.
+3. Run `Tools/build-ipa.sh` (route B below). It notices that the default
+   Xcode is too new and uses `Xcode-26.app` automatically. To choose one
+   explicitly, run the command below.
+
+```bash
+Tools/build-ipa.sh --xcode /Applications/Xcode-26.app
+```
+
+The script only uses Xcode 26's command line build tools, which often
+still work when an older Xcode's window refuses to open on a newer macOS
+(not verified on macOS 27). If Xcode 26 does not
+work at all on your macOS, the fallback is to build on another Mac (or a
+hosted macOS build service) that has Xcode 26, and copy the IPA over.
+
+Do not raise the app's deployment target to iOS 15 to please Xcode 27: the
+result would not install or run on iOS 12.
 
 Debugging and pressing Run on an iOS 12 device needs an Xcode that still
-talks to iOS 12 devices. If yours does not, use route B: it only needs
-Xcode to *build*.
+talks to iOS 12 devices. Route B only needs Xcode to *build*.
 
 ## A. Xcode and an Apple ID (any phone)
 

@@ -1,8 +1,13 @@
 #!/bin/bash
 # Build TraceZero.ipa for a jailbroken iPhone (AppSync Unified installed).
 #
-#   Tools/build-ipa.sh              # with the CarPlay entitlement
-#   Tools/build-ipa.sh --no-carplay # without it
+#   Tools/build-ipa.sh                              # with the CarPlay entitlement
+#   Tools/build-ipa.sh --no-carplay                 # without it
+#   Tools/build-ipa.sh --xcode /Applications/Xcode-26.app
+#
+# The app targets iOS 12, which Xcode 27 and later refuse to build. If the
+# selected Xcode is too new, an older one (16 or 26) installed next to it in
+# /Applications is used automatically; --xcode picks one explicitly.
 #
 # The app is built without a certificate and then fake-signed with `ldid`,
 # which a jailbroken phone with AppSync Unified accepts. Unlike a free Apple
@@ -14,15 +19,51 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CARPLAY=1
-for arg in "$@"; do
-  case "$arg" in
-    --no-carplay) CARPLAY=0 ;;
-    -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
-    *) echo "unknown option: $arg" >&2; exit 2 ;;
+XCODE_APP=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --no-carplay) CARPLAY=0; shift ;;
+    --xcode) XCODE_APP="${2:-}"; shift 2 ;;
+    -h|--help) sed -n '2,18p' "$0"; exit 0 ;;
+    *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
 
+xcode_major() {  # major version of the Xcode at developer dir $1
+  DEVELOPER_DIR="$1" xcodebuild -version 2>/dev/null | sed -n 's/^Xcode \([0-9]*\).*/\1/p'
+}
+
+if [ -n "$XCODE_APP" ]; then
+  export DEVELOPER_DIR="$XCODE_APP/Contents/Developer"
+  [ -d "$DEVELOPER_DIR" ] || { echo "not an Xcode app: $XCODE_APP" >&2; exit 1; }
+fi
 command -v xcodebuild >/dev/null || { echo "xcodebuild not found: install Xcode" >&2; exit 1; }
+CUR_DIR="${DEVELOPER_DIR:-$(xcode-select -p)}"
+MAJOR="$(xcode_major "$CUR_DIR")"
+if [ -n "$MAJOR" ] && [ "$MAJOR" -ge 27 ]; then
+  if [ -n "$XCODE_APP" ]; then
+    echo "$XCODE_APP is Xcode $MAJOR, which cannot build for iOS 12. Use Xcode 16 or 26." >&2; exit 1
+  fi
+  FOUND=""
+  for app in /Applications/Xcode*.app; do
+    [ -d "$app/Contents/Developer" ] || continue
+    m="$(xcode_major "$app/Contents/Developer")"
+    if [ -n "$m" ] && [ "$m" -ge 15 ] && [ "$m" -le 26 ]; then FOUND="$app"; fi
+  done
+  if [ -z "$FOUND" ]; then
+    cat >&2 <<MSG
+Xcode $MAJOR cannot build apps for iOS 12 (its minimum is iOS 15).
+Install Xcode 26 next to it (it does not replace Xcode $MAJOR):
+  1. Download Xcode 26.x from https://developer.apple.com/download/all/ (free Apple ID)
+  2. Unpack it and rename it to /Applications/Xcode-26.app
+  3. Run this script again; it will find it.
+See docs/INSTALL.md.
+MSG
+    exit 1
+  fi
+  export DEVELOPER_DIR="$FOUND/Contents/Developer"
+  echo "==> Xcode $MAJOR is too new for iOS 12; using $FOUND" >&2
+fi
 command -v ldid >/dev/null || { echo "ldid not found: brew install ldid" >&2; exit 1; }
 
 BUILD="$ROOT/build"

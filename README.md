@@ -49,9 +49,11 @@ Nothing talks to a server. Maps, routing and search come from **map packs**
    `MapBuilder/MapForge.xcodeproj`, press Run, pick a region, press FORGE.
    Or run `Forge/forge.sh hungary` in Terminal
    ([MapBuilder/README.md](MapBuilder/README.md)).
-2. **Install the app**: open `TraceZero.xcodeproj` in Xcode 16 or 26 and run
-   it on the phone, or build an IPA for the jailbroken phone with
-   `Tools/build-ipa.sh` ([docs/INSTALL.md](docs/INSTALL.md)).
+2. **Install the app**: build an IPA for the jailbroken phone with
+   `Tools/build-ipa.sh`, or open `TraceZero.xcodeproj` and run it on the
+   phone. This needs Xcode 16 or 26: Xcode 27 can no longer build for
+   iOS 12, but Xcode 26 can be installed next to it and the script uses it
+   automatically ([docs/INSTALL.md](docs/INSTALL.md)).
 3. **Copy the pack**: Finder → iPhone → Files → drag `hungary.vmap` onto
    TRACE//ZERO.
 
