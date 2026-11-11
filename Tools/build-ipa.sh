@@ -117,11 +117,17 @@ MSG
 fi
 
 echo "==> Fake-signing"
+# The signature's identifier must be the bundle id. ldid otherwise uses the
+# executable's file name, and iOS 12 then gives the running app a second,
+# empty data container named after it: files copied with Finder land in
+# the registered container and the app never sees them.
+plist() { /usr/libexec/PlistBuddy -c "Print :$1" "$2"; }
+BUNDLE_ID="$(plist CFBundleIdentifier "$APP/Info.plist")"
 if [ -d "$APP/Frameworks" ]; then
   for fw in "$APP"/Frameworks/*.framework; do
     [ -d "$fw" ] || continue
-    bin="$fw/$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$fw/Info.plist")"
-    ldid -S "$bin"
+    bin="$fw/$(plist CFBundleExecutable "$fw/Info.plist")"
+    ldid -S -I"$(plist CFBundleIdentifier "$fw/Info.plist")" "$bin"
   done
   # Swift runtime libraries that some Xcode versions embed for iOS 12.0/12.1
   for lib in "$APP"/Frameworks/*.dylib; do
@@ -129,10 +135,11 @@ if [ -d "$APP/Frameworks" ]; then
   done
 fi
 if [ "$CARPLAY" = 1 ]; then
-  ldid -S"$ROOT/App/TraceZero-CarPlay.entitlements" "$APP/TraceZero"
-  echo "    with com.apple.developer.carplay-maps"
+  ldid -S"$ROOT/App/TraceZero-CarPlay.entitlements" -I"$BUNDLE_ID" "$APP/TraceZero"
+  echo "    $BUNDLE_ID, with com.apple.developer.carplay-maps"
 else
-  ldid -S "$APP/TraceZero"
+  ldid -S -I"$BUNDLE_ID" "$APP/TraceZero"
+  echo "    $BUNDLE_ID"
 fi
 
 echo "==> Packaging"

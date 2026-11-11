@@ -93,6 +93,11 @@ To update, build and install again. Your map packs and settings stay.
 
 ## Copying map packs
 
+If an older build of the app (signed before this was fixed) does not see
+packs copied with Finder, delete the app from the phone and install a
+fresh build: older fake signatures made iOS give the app a second, empty
+data folder.
+
 The app appears on the phone and in Finder as **TRACE ZERO** (with a space).
 Its name must not contain `/`: Finder shows each app as a folder named
 after it, and a slash in that name makes copies silently go nowhere.
