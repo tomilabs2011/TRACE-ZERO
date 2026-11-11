@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the iPhone and CarPlay app icons from Branding/logo-1024.png.
+"""Generate the iPhone, CarPlay and Mac app icons from Branding/logo-1024.png.
 
     python3 Tools/make_icons.py
 
@@ -15,6 +15,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "Branding", "logo-1024.png")
 ICONSET = os.path.join(ROOT, "App", "Resources", "Assets.xcassets", "AppIcon.appiconset")
 LAUNCH = os.path.join(ROOT, "App", "Resources", "Assets.xcassets", "LaunchLogo.imageset")
+MAC_ICONSET = os.path.join(ROOT, "MapBuilder", "MapForge", "Assets.xcassets", "AppIcon.appiconset")
+MAC_ICONS = [(16, 1), (16, 2), (32, 1), (32, 2), (128, 1), (128, 2), (256, 1), (256, 2), (512, 1), (512, 2)]
 
 # (idiom, size in points, scale)
 ICONS = [
@@ -47,7 +49,17 @@ def main():
         json.dump({"images": launch, "info": {"version": 1, "author": "xcode"}}, f, indent=2)
     with open(os.path.join(os.path.dirname(ICONSET), "Contents.json"), "w") as f:
         json.dump({"info": {"version": 1, "author": "xcode"}}, f, indent=2)
-    print(f"wrote {len(images)} app icons and {len(launch)} launch images")
+    os.makedirs(MAC_ICONSET, exist_ok=True)
+    mac = []
+    for pt, scale in MAC_ICONS:
+        name = f"mac-{pt}@{scale}x.png"
+        src.resize((pt * scale, pt * scale), Image.LANCZOS).save(os.path.join(MAC_ICONSET, name), optimize=True)
+        mac.append({"idiom": "mac", "size": f"{pt}x{pt}", "scale": f"{scale}x", "filename": name})
+    with open(os.path.join(MAC_ICONSET, "Contents.json"), "w") as f:
+        json.dump({"images": mac, "info": {"version": 1, "author": "xcode"}}, f, indent=2)
+    with open(os.path.join(os.path.dirname(MAC_ICONSET), "Contents.json"), "w") as f:
+        json.dump({"info": {"version": 1, "author": "xcode"}}, f, indent=2)
+    print(f"wrote {len(images)} app icons, {len(launch)} launch images, {len(mac)} Mac icons")
 
 
 if __name__ == "__main__":

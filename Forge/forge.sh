@@ -30,6 +30,10 @@ GEOFABRIK_INDEX="https://download.geofabrik.de/index-v1-nogeom.json"
 REGION=""; FILE=""; ID=""; NAME=""; OUT="$PWD"; PROFILES="car,bike,foot"
 TILES=1; SEARCH=1; FRESH=0; PROGRESS=0; LIST=""
 
+# Cancelling (Ctrl-C, or the Mac app's Cancel button) stops the running
+# download / Planetiler / tzforge too: they are direct children of this shell.
+trap 'pkill -P $$ 2>/dev/null; echo "cancelled" >&2; exit 130' INT TERM
+
 die() { echo "error: $*" >&2; [ "$PROGRESS" = 1 ] && echo "ERROR $*"; exit 1; }
 step() { echo "==> [$1/$STEPS] $2" >&2; [ "$PROGRESS" = 1 ] && echo "FORGE $1 $STEPS $2"; return 0; }
 
@@ -153,7 +157,7 @@ if [ "$TILES" = 1 ]; then
   heap=$(( mem_gb / 2 )); [ "$heap" -lt 2 ] && heap=2
   # Planetiler keeps its downloads (oceans, lakes, natural earth) in ./data,
   # so it runs inside the cache folder where they are reused.
-  (cd "$CACHE" && "$JAVA" "-Xmx${heap}g" -jar "$JAR" --osm-path="$PBF" --output="$PACK/map.pmtiles.part.pmtiles" \
+  (cd "$CACHE" && exec "$JAVA" "-Xmx${heap}g" -jar "$JAR" --osm-path="$PBF" --output="$PACK/map.pmtiles.part.pmtiles" \
      --download --force --languages=en --nodemap-type=sparsearray --storage=mmap 1>&2) || die "Planetiler failed"
   mv "$PACK/map.pmtiles.part.pmtiles" "$PACK/map.pmtiles"
 fi
