@@ -77,6 +77,27 @@ final class MapController: NSObject, MLNMapViewDelegate {
         applyFrameRate()
         reloadStyleIfNeeded(force: composedMode != Settings.shared.renderMode)
         applyNavigationLook()
+        applyTilt()
+    }
+
+    private var appliedTilt: Bool?
+
+    /// Tilts (3D) or flattens the camera to match Settings.tilt, keeping the
+    /// current follow mode so navigation keeps following the user.
+    func applyTilt(animated: Bool = true) {
+        let want = Settings.shared.tilt
+        guard appliedTilt != want else { return }
+        appliedTilt = want
+        let tracking = mapView.userTrackingMode
+        let cam = mapView.camera
+        cam.pitch = want ? 45 : 0
+        mapView.setCamera(cam, withDuration: animated ? 0.35 : 0,
+                          animationTimingFunction: CAMediaTimingFunction(name: .easeInEaseOut)) { [weak self] in
+            guard let self = self else { return }
+            if tracking != .none && self.mapView.userTrackingMode == .none {
+                self.mapView.setUserTrackingMode(tracking, animated: false, completionHandler: nil)
+            }
+        }
     }
 
     @objc private func packsChanged() {
@@ -236,7 +257,8 @@ final class MapController: NSObject, MLNMapViewDelegate {
             applyOverlays()
             mapView.setUserTrackingMode(.none, animated: false, completionHandler: nil)
             let cam = mapView.camera
-            cam.pitch = 0
+            cam.pitch = Settings.shared.tilt ? 45 : 0   // the 3D toggle applies when browsing too
+            appliedTilt = Settings.shared.tilt
             mapView.setCamera(cam, animated: true)
         }
     }
@@ -246,6 +268,7 @@ final class MapController: NSObject, MLNMapViewDelegate {
     func followCourse(mode: TravelMode) {
         let cam = mapView.camera
         cam.pitch = Settings.shared.tilt ? 45 : 0
+        appliedTilt = Settings.shared.tilt
         mapView.setCamera(cam, animated: false)
         let zoom: Double = mode == .car ? 16.2 : (mode == .bike ? 16.8 : 17.3)
         mapView.setZoomLevel(zoom, animated: true)

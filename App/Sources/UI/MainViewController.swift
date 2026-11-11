@@ -24,6 +24,7 @@ final class MainViewController: UIViewController {
     private let menuButton = IconButton(icon: .menu)
     private let locateButton = IconButton(icon: .locate)
     private let layersButton = IconButton(icon: .layers)
+    private let tiltButton = TextButton(title: "3D")
     private let recenterButton = TextButton(title: "RECENTER")
     private let attribution = UILabel()
     private let placeCard = PlaceCardView()
@@ -59,6 +60,8 @@ final class MainViewController: UIViewController {
         menuButton.addTarget(self, action: #selector(openMenu), for: .touchUpInside)
         locateButton.addTarget(self, action: #selector(locateTapped), for: .touchUpInside)
         layersButton.addTarget(self, action: #selector(cycleRenderMode), for: .touchUpInside)
+        tiltButton.addTarget(self, action: #selector(tiltTapped), for: .touchUpInside)
+        tiltButton.accessibilityLabel = "3D view"
         recenterButton.addTarget(self, action: #selector(recenterTapped), for: .touchUpInside)
 
         attribution.text = "© OpenStreetMap contributors"
@@ -87,7 +90,7 @@ final class MainViewController: UIViewController {
         status.rerouteButton.addTarget(self, action: #selector(rerouteTapped), for: .touchUpInside)
         status.stepsButton.addTarget(self, action: #selector(showSteps), for: .touchUpInside)
 
-        for v in [attribution, searchBar, menuButton, locateButton, layersButton, recenterButton,
+        for v in [attribution, searchBar, menuButton, locateButton, layersButton, tiltButton, recenterButton,
                   emptyNotice, placeCard, previewCard, banner, status] as [UIView] {
             view.addSubview(v)
         }
@@ -202,6 +205,12 @@ final class MainViewController: UIViewController {
             layersButton.frame.origin.y = bottom - b
             locateButton.frame.origin.y = layersButton.frame.minY - 8 - b
         }
+        // 3D toggle: above the other two while browsing; alone on the right
+        // edge (where they were) while navigating.
+        tiltButton.frame = navigating
+            ? CGRect(x: bx, y: (landscape ? bottom : panelBottom) - 8 - b, width: b, height: b)
+            : CGRect(x: bx, y: locateButton.frame.minY - 8 - b, width: b, height: b)
+        if navigating && landscape { tiltButton.frame.origin.y = bottom - b }
         recenterButton.frame = CGRect(x: (landscape ? panelLeft + 8 : left), y: panelBottom - 8 - b,
                                       width: 130, height: b)
         attribution.frame = CGRect(x: left + 2, y: (landscape || navigating ? bottom - 14 : panelBottom - 16),
@@ -263,6 +272,7 @@ final class MainViewController: UIViewController {
         locateButton.isHidden = navigating
         layersButton.isHidden = navigating
         locateButton.icon = map.isFollowing ? .locateFilled : .locate
+        tiltButton.filled = Settings.shared.tilt
     }
 
     // MARK: actions
@@ -275,24 +285,27 @@ final class MainViewController: UIViewController {
     }
 
     @objc private func openMenu() {
-        let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        sheet.addAction(UIAlertAction(title: "Map packs", style: .default) { [weak self] _ in
-            self?.present(UINavigationController.themed(root: PacksViewController()), animated: true)
-        })
-        sheet.addAction(UIAlertAction(title: "Settings", style: .default) { [weak self] _ in
-            self?.present(UINavigationController.themed(root: SettingsViewController()), animated: true)
-        })
-        sheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        sheet.popoverPresentationController?.sourceView = menuButton
-        sheet.popoverPresentationController?.sourceRect = menuButton.bounds
-        present(sheet, animated: true)
+        let anchor = menuButton.convert(menuButton.bounds, to: view)
+        DropMenu.show([
+            DropMenu.Item(title: "Map packs", icon: .packs) { [weak self] in
+                self?.present(UINavigationController.themed(root: PacksViewController()), animated: true)
+            },
+            DropMenu.Item(title: "Settings", icon: .settings) { [weak self] in
+                self?.present(UINavigationController.themed(root: SettingsViewController()), animated: true)
+            },
+        ], in: view, below: anchor)
+    }
+
+    @objc private func tiltTapped() {
+        Settings.shared.tilt.toggle()   // MapController tilts the camera on the change
+        refreshButtons()
     }
 
     @objc private func locateTapped() {
         let ls = LocationService.shared
         if ls.denied {
             let a = UIAlertController(title: "Location is off",
-                                      message: "Allow location for TRACE//ZERO in Settings → Privacy → Location Services.",
+                                      message: "Allow location for TRACE ZERO in Settings → Privacy → Location Services.",
                                       preferredStyle: .alert)
             a.addAction(UIAlertAction(title: "OK", style: .default))
             present(a, animated: true)

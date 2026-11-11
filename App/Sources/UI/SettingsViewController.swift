@@ -24,7 +24,7 @@ final class SettingsViewController: UITableViewController {
                    set: { Settings.shared.hideLabelsWhileNavigating = $0 }),
         ],
         [
-            Toggle(title: "Tilted view", detail: "3D-style camera while navigating",
+            Toggle(title: "Tilted view (3D)", detail: "Also on the map: the 3D button",
                    get: { Settings.shared.tilt }, set: { Settings.shared.tilt = $0 }),
             Toggle(title: "Smooth (60 fps)", detail: "Uses more battery; 30 fps is the default",
                    get: { Settings.shared.smoothRendering }, set: { Settings.shared.smoothRendering = $0 }),

@@ -123,6 +123,10 @@
 			isa = PBXBuildFile;
 			fileRef = E7546219691CB11B9E5A5DD6;
 		};
+		B517F591726F1FBE57678DE0 = {
+			isa = PBXBuildFile;
+			fileRef = 8FD090E6D2E41637FD9A536A;
+		};
 		CC32034C43D12867465A68AB = {
 			isa = PBXBuildFile;
 			fileRef = 7AE541F74047C1538C52F06D;
@@ -294,6 +298,12 @@
 			path = VoiceGuide.swift;
 			sourceTree = "<group>";
 		};
+		8FD090E6D2E41637FD9A536A = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.swift;
+			path = DropMenu.swift;
+			sourceTree = "<group>";
+		};
 		96F4F354F52E9C2A83380BEA = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.swift;
@@ -458,6 +468,7 @@
 		4FD87E2C8DAF676D08869FEF = {
 			isa = PBXGroup;
 			children = (
+				8FD090E6D2E41637FD9A536A,
 				1E8B3FD268C0687C4377E38D,
 				B1F736BF8954C032BA684E6E,
 				5ED055F8EA12026364F09C30,
@@ -651,6 +662,7 @@
 				291AD39935B5CB48007B5D03,
 				FBF96CBF69B02570E1931DA2,
 				81DB2511E61E353FFF1F9B9C,
+				B517F591726F1FBE57678DE0,
 				1BF00DC776AA688B91745802,
 				313C7F91EC98AE9286413CB0,
 				CCE6C16C23D4248A4AAB6C9B,
