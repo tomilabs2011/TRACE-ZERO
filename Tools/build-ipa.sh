@@ -84,14 +84,33 @@ BUILD="$ROOT/build"
 DERIVED="$BUILD/DerivedData"
 mkdir -p "$BUILD"
 
-echo "==> Building (Release, unsigned)"
+XB="$(DEVELOPER_DIR="${DEVELOPER_DIR:-$CUR_DIR}" xcrun -f xcodebuild 2>/dev/null || echo xcodebuild)"
+LOG="$BUILD/xcodebuild.log"
+echo "==> Building (Release, unsigned); full log: $LOG"
+# Device chatter ("Developer Disk Image", "iPhoneConnect") is filtered out:
+# xcodebuild probes plugged-in phones even for a generic build.
 xcodebuild -project "$ROOT/TraceZero.xcodeproj" -scheme TraceZero -configuration Release \
   -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath "$DERIVED" \
-  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build | \
-  grep -E "error|warning: unable|BUILD (SUCCEEDED|FAILED)" || true
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build > "$LOG" 2>&1 || true
+grep -E "(error|warning: unable)" "$LOG" | grep -vE "iPhoneConnect|Developer Disk Image|DVTDevice|DDIError" | head -40 || true
+grep -E "BUILD (SUCCEEDED|FAILED)" "$LOG" || true
 
 APP="$DERIVED/Build/Products/Release-iphoneos/TraceZero.app"
-[ -d "$APP" ] || { echo "build failed: $APP not found (run the xcodebuild command above without the grep to see why)" >&2; exit 1; }
+if [ ! -d "$APP" ]; then
+  if grep -q "is not installed. Please download and install the platform" "$LOG"; then
+    cat >&2 <<MSG
+
+This Xcode has not downloaded its iOS build components yet. Run:
+  sudo $XB -license accept
+  $XB -runFirstLaunch
+  $XB -downloadPlatform iOS
+then run this script again (unplugging the iPhone keeps the output quiet).
+MSG
+  else
+    echo "build failed: see the errors above, or the full log in $LOG" >&2
+  fi
+  exit 1
+fi
 
 echo "==> Fake-signing"
 if [ -d "$APP/Frameworks" ]; then
