@@ -92,7 +92,11 @@ echo "==> Building (Release, unsigned); full log: $LOG"
 xcodebuild -project "$ROOT/TraceZero.xcodeproj" -scheme TraceZero -configuration Release \
   -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath "$DERIVED" \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build > "$LOG" 2>&1 || true
-grep -E "(error|warning: unable)" "$LOG" | grep -vE "iPhoneConnect|Developer Disk Image|DVTDevice|DDIError" | head -40 || true
+# Real diagnostics only (": error:" from compilers, "xcodebuild: error"); not the
+# compiler command lines, which contain flags like -Werror.
+grep -E "(: (fatal )?error: |^xcodebuild: error)" "$LOG" | grep -vE "iPhoneConnect|Developer Disk Image|DVTDevice|DDIError" | head -40 || true
+WARN=$(grep -cE ": warning: " "$LOG" || true)
+[ "${WARN:-0}" -gt 0 ] && echo "    ($WARN compiler warnings, see $LOG)"
 grep -E "BUILD (SUCCEEDED|FAILED)" "$LOG" || true
 
 APP="$DERIVED/Build/Products/Release-iphoneos/TraceZero.app"
@@ -118,6 +122,10 @@ if [ -d "$APP/Frameworks" ]; then
     [ -d "$fw" ] || continue
     bin="$fw/$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$fw/Info.plist")"
     ldid -S "$bin"
+  done
+  # Swift runtime libraries that some Xcode versions embed for iOS 12.0/12.1
+  for lib in "$APP"/Frameworks/*.dylib; do
+    [ -f "$lib" ] && ldid -S "$lib"
   done
 fi
 if [ "$CARPLAY" = 1 ]; then
