@@ -131,7 +131,7 @@ final class MainViewController: UIViewController {
         let store = PackStore.shared
         if store.packs.isEmpty {
             var text = "NO MAP PACKS\n\nConnect the iPhone to your Mac, open Finder → iPhone → Files, " +
-                "and drag a .vmap folder onto TRACE//ZERO."
+                "and drag a .vmap folder onto TRACE ZERO."
             if !store.problems.isEmpty {
                 text += "\n\n" + store.problems.map { "\($0.folder): \($0.message)" }.joined(separator: "\n")
             } else if !store.documentNames.isEmpty {

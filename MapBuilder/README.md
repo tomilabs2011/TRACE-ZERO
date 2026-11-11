@@ -13,7 +13,7 @@ use it, both doing the same thing.
    `.osm.pbf` file.
 3. Choose the routing profiles and where to save, then press **FORGE**.
 4. When it says ready, press **Show in Finder** and drag the `.vmap`
-   folder to the phone (Finder → iPhone → Files → TRACE//ZERO).
+   folder to the phone (Finder → iPhone → Files → TRACE ZERO).
 
 ## Terminal
 

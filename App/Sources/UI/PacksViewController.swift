@@ -52,7 +52,7 @@ final class PacksViewController: UITableViewController {
             .volumeAvailableCapacity.map { ByteCountFormatter.string(fromByteCount: Int64($0), countStyle: .file) }
         return "1. Build a pack on your Mac with TRACE ZERO MAP FORGE.\n" +
             "2. Connect the iPhone, open Finder → iPhone → Files.\n" +
-            "3. Drag the .vmap folder onto TRACE//ZERO.\n" +
+            "3. Drag the .vmap folder onto TRACE ZERO.\n" +
             "Packs appear here automatically. Swipe left to delete one." +
             (free.map { "\n\nFree space on the phone: \($0)" } ?? "") +
             "\n\nThis app reads: \(store.documents.path)" +

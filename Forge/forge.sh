@@ -180,6 +180,6 @@ args=(build "$PBF" "$PACK" --name "$NAME" --id "$ID" --profiles "$PROFILES")
 step $((s + 1)) "Checking the pack"
 "$TZ" verify "$PACK" --pairs 50 >&2 || die "the routing check failed; please report this"
 du -sh "$PACK" >&2
-echo "==> $PACK is ready. Copy it to the iPhone with Finder → iPhone → Files → TRACE//ZERO." >&2
+echo "==> $PACK is ready. Copy it to the iPhone with Finder → iPhone → Files → TRACE ZERO." >&2
 [ "$PROGRESS" = 1 ] && echo "PACK $PACK"
 exit 0

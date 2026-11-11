@@ -93,6 +93,10 @@ To update, build and install again. Your map packs and settings stay.
 
 ## Copying map packs
 
+The app appears on the phone and in Finder as **TRACE ZERO** (with a space).
+Its name must not contain `/`: Finder shows each app as a folder named
+after it, and a slash in that name makes copies silently go nowhere.
+
 1. Build a pack: see [MapBuilder/README.md](../MapBuilder/README.md).
 2. Connect the phone, open Finder, select the iPhone, open the **Files** tab.
 3. Drag the `.vmap` folder onto **TRACE//ZERO**.

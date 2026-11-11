@@ -189,7 +189,7 @@ struct ContentView: View {
             }
         case .finished(let url):
             HStack {
-                Text("✓ \(url.lastPathComponent) is ready. In Finder, select your iPhone → Files and drag it onto TRACE//ZERO.")
+                Text("✓ \(url.lastPathComponent) is ready. In Finder, select your iPhone → Files and drag it onto TRACE ZERO.")
                     .font(.system(size: 12, weight: .semibold))
                 Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
             }
