@@ -23,3 +23,10 @@ xcuserdata/
 !Tests/data/helsinki.osm.pbf
 *.pmtiles
 *.vmap/
+
+# Style preview working files
+Tools/style-preview/node_modules/
+Tools/style-preview/.venv/
+Tools/style-preview/omt.json
+Tools/style-preview/route.geojson
+Tools/style-preview/package*.json

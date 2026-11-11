@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="/nm/maplibre-gl/dist/maplibre-gl.css">
+<style>html,body,#map{margin:0;width:100%;height:100%;background:#000}</style>
+<script src="/nm/maplibre-gl/dist/maplibre-gl.js"></script></head><body><div id="map"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const mode = q.get('mode') || 'outline', nav = q.get('nav') === '1';
+// Same pattern images the app draws with Core Graphics (MapImages.swift).
+function img(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); draw(g, w, h); return g.getImageData(0, 0, w, h); }
+const IMAGES = {
+  'hatch': img(24, 24, (g, w, h) => { g.strokeStyle = 'rgba(0,204,255,0.30)'; g.lineWidth = 2;
+     g.beginPath(); g.moveTo(-2, h + 2); g.lineTo(w + 2, -2); g.stroke(); }),
+  'hatch-water': img(16, 16, (g, w, h) => { g.strokeStyle = 'rgba(0,204,255,0.55)'; g.lineWidth = 2;
+     g.beginPath(); g.moveTo(-2, h + 2); g.lineTo(w + 2, -2); g.stroke(); }),
+  'chevron': img(48, 48, (g, w, h) => { g.strokeStyle = '#000'; g.lineWidth = 9; g.lineCap = 'round'; g.lineJoin = 'round';
+     g.beginPath(); g.moveTo(16, 10); g.lineTo(32, 24); g.lineTo(16, 38); g.stroke(); }),
+};
+(async () => {
+  const style = await (await fetch('/app/Styles/' + mode + '.json')).json();
+  style.sources.omt = { type: 'vector', tiles: [location.origin + '/tiles/{z}/{x}/{y}.pbf'], maxzoom: 16 };
+  style.glyphs = location.origin + '/app/Glyphs/{fontstack}/{range}.pbf';
+  const route = await (await fetch('/route.geojson')).json();
+  const line = route.features[0].geometry.coordinates;
+  const split = Math.floor(line.length * 0.25);
+  const map = new maplibregl.Map({ container: 'map', style, pixelRatio: 2, attributionControl: false,
+    center: nav ? line[split] : [24.9445, 60.1690], zoom: nav ? 16.4 : 15.2, pitch: nav ? 40 : 0,
+    bearing: nav ? 120 : 0, fadeDuration: 0 });
+  map.on('styleimagemissing', e => { if (IMAGES[e.id]) map.addImage(e.id, IMAGES[e.id], { pixelRatio: 2 }); });
+  map.on('load', () => {
+    if (nav) {
+      map.getSource('route').setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: line.slice(split) } });
+      map.getSource('route-passed').setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: line.slice(0, split + 1) } });
+      const next = route.features.find(f => f.geometry.type === 'Point' && line.findIndex(c => c[0] === f.geometry.coordinates[0] && c[1] === f.geometry.coordinates[1]) > split);
+      if (next) map.getSource('maneuver').setData(next);
+      map.getSource('dest').setData({ type: 'Feature', geometry: { type: 'Point', coordinates: line[line.length - 1] } });
+      map.setPaintProperty('nav-dim', 'fill-opacity', 0.55);
+    } else if (q.get('pin') === '1') {
+      map.getSource('pin').setData({ type: 'Feature', geometry: { type: 'Point', coordinates: [24.9445, 60.1690] } });
+    }
+    map.once('idle', () => { window.RENDERED = true; });
+  });
+  map.on('error', e => console.log('maplibre error', e.error && e.error.message));
+})();
+</script></body></html>
