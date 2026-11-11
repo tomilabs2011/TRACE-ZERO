@@ -29,8 +29,8 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-xcode_major() {  # major version of the Xcode at developer dir $1
-  DEVELOPER_DIR="$1" xcodebuild -version 2>/dev/null | sed -n 's/^Xcode \([0-9]*\).*/\1/p'
+xcode_major() {  # major version of the Xcode at developer dir $1 ("" if unusable)
+  DEVELOPER_DIR="$1" xcodebuild -version 2>/dev/null | sed -n 's/^Xcode \([0-9]*\).*/\1/p' || true
 }
 
 if [ -n "$XCODE_APP" ]; then
@@ -38,8 +38,22 @@ if [ -n "$XCODE_APP" ]; then
   [ -d "$DEVELOPER_DIR" ] || { echo "not an Xcode app: $XCODE_APP" >&2; exit 1; }
 fi
 command -v xcodebuild >/dev/null || { echo "xcodebuild not found: install Xcode" >&2; exit 1; }
-CUR_DIR="${DEVELOPER_DIR:-$(xcode-select -p)}"
+CUR_DIR="${DEVELOPER_DIR:-$(xcode-select -p 2>/dev/null || true)}"
 MAJOR="$(xcode_major "$CUR_DIR")"
+if [ -z "$MAJOR" ]; then
+  echo "xcodebuild does not work with the selected developer folder: ${CUR_DIR:-none}" >&2
+  echo "Its own message:" >&2
+  DEVELOPER_DIR="$CUR_DIR" xcodebuild -version >&2 || true
+  cat >&2 <<'MSG'
+
+Usually one of these fixes it:
+  sudo xcode-select -s /Applications/Xcode.app/Contents/Developer   (if it points at CommandLineTools)
+  sudo xcodebuild -license accept                                    (first run of a new Xcode)
+  xcodebuild -runFirstLaunch                                         (installs Xcode's extra components)
+MSG
+  exit 1
+fi
+echo "==> Using Xcode $MAJOR ($CUR_DIR)" >&2
 if [ -n "$MAJOR" ] && [ "$MAJOR" -ge 27 ]; then
   if [ -n "$XCODE_APP" ]; then
     echo "$XCODE_APP is Xcode $MAJOR, which cannot build for iOS 12. Use Xcode 16 or 26." >&2; exit 1
