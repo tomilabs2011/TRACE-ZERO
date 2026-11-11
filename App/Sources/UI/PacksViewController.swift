@@ -15,9 +15,9 @@ final class PacksViewController: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        tableView.backgroundColor = .black
-        tableView.separatorColor = Theme.cyanFaint
-        tableView.indicatorStyle = .white
+        tableView.backgroundColor = Theme.background
+        tableView.separatorColor = Theme.fgFaint
+        tableView.indicatorStyle = Theme.scrollIndicator
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .done, target: self,
                                                             action: #selector(done))
         NotificationCenter.default.addObserver(self, selector: #selector(reload), name: PackStore.didChange, object: nil)
@@ -61,19 +61,19 @@ final class PacksViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
-        (view as? UITableViewHeaderFooterView)?.textLabel?.textColor = Theme.cyan
+        (view as? UITableViewHeaderFooterView)?.textLabel?.textColor = Theme.fg
     }
 
     override func tableView(_ tableView: UITableView, willDisplayFooterView view: UIView, forSection section: Int) {
-        (view as? UITableViewHeaderFooterView)?.textLabel?.textColor = Theme.cyanDim
+        (view as? UITableViewHeaderFooterView)?.textLabel?.textColor = Theme.fgDim
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
         cell.backgroundColor = Theme.panel
-        cell.textLabel?.textColor = Theme.cyan
+        cell.textLabel?.textColor = Theme.fg
         cell.textLabel?.font = Theme.font(17, weight: .bold)
-        cell.detailTextLabel?.textColor = Theme.cyanDim
+        cell.detailTextLabel?.textColor = Theme.fgDim
         cell.detailTextLabel?.font = Theme.font(13, weight: .regular)
         cell.detailTextLabel?.numberOfLines = 0
         cell.selectionStyle = .none

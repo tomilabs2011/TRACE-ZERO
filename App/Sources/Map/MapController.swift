@@ -32,8 +32,9 @@ final class MapController: NSObject, MLNMapViewDelegate {
     private(set) var navigating = false
     /// Top/bottom screen space covered by panels (points).
     private var overlayInsets = UIEdgeInsets.zero
-    /// Scanline texture over the map in the SCREEN style (see applyScreenLook).
-    private let scanlines = UIView()
+    /// Screen texture over the map in the WALKER styles (see applyScreenLook).
+    private let texture = UIView()
+    private var textureMode: RenderMode?
     let isCarPlay: Bool
 
     init(frame: CGRect, carPlay: Bool = false) {
@@ -42,7 +43,7 @@ final class MapController: NSObject, MLNMapViewDelegate {
         super.init()
         mapView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         mapView.backgroundColor = .black
-        mapView.tintColor = Theme.cyan
+        mapView.tintColor = Theme.fg
         mapView.delegate = self
         mapView.logoView.isHidden = true            // attribution is shown by our own label
         mapView.attributionButton.isHidden = true
@@ -54,10 +55,9 @@ final class MapController: NSObject, MLNMapViewDelegate {
         mapView.locationManager = locationAdapter
         mapView.prefetchesTiles = false             // nothing to prefetch from a network
         applyFrameRate()
-        scanlines.isUserInteractionEnabled = false
-        scanlines.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        scanlines.backgroundColor = UIColor(patternImage: MapController.scanlineTile())
-        scanlines.isAccessibilityElement = false
+        texture.isUserInteractionEnabled = false
+        texture.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        texture.isAccessibilityElement = false
         applyScreenLook()
         if !carPlay {
             let lp = UILongPressGestureRecognizer(target: self, action: #selector(longPress(_:)))
@@ -88,38 +88,61 @@ final class MapController: NSObject, MLNMapViewDelegate {
         applyTilt()
     }
 
-    /// The SCREEN style imitates a monitor: a light map under fine horizontal
-    /// scanlines. The texture is a plain view right above MapLibre's drawing
-    /// surface (below the compass), so it costs one blended layer and nothing
-    /// per frame. Other styles remove it.
+    /// The WALKER styles imitate a monitor. WALKER (light) gets fine
+    /// horizontal scanlines, WALKER INVERTED (dark) a dot-matrix grid that
+    /// turns its bright lines and water into rows of dots. The texture is a
+    /// plain view right above MapLibre's drawing surface (below the compass),
+    /// so it costs one blended layer and nothing per frame. The other styles
+    /// remove it. The map view's background (seen while tiles load) and its
+    /// tint (GPS accuracy circle) follow the style too.
     private func applyScreenLook() {
-        let screen = Settings.shared.renderMode == .screen
-        mapView.backgroundColor = screen ? Theme.screenBackground : .black
-        mapView.tintColor = screen ? Theme.screenInk : Theme.cyan
-        if !screen {
-            scanlines.removeFromSuperview()
+        let mode = Settings.shared.renderMode
+        switch mode {
+        case .walker:
+            mapView.backgroundColor = Theme.walkerCyan
+            mapView.tintColor = Theme.walkerNavy
+        case .walkerInverted:
+            mapView.backgroundColor = Theme.walkerNavy
+            mapView.tintColor = Theme.walkerCyan
+        case .outline, .hatch, .solid, .minimal:
+            mapView.backgroundColor = .black
+            mapView.tintColor = Theme.standardCyan
+            texture.removeFromSuperview()
+            textureMode = nil
             return
         }
-        guard scanlines.superview == nil else { return }
+        if textureMode != mode {
+            textureMode = mode
+            texture.backgroundColor = UIColor(patternImage: MapController.textureTile(dots: mode == .walkerInverted))
+        }
+        guard texture.superview == nil else { return }
         // MapLibre's drawing surface (an MTKView or GLKView) is its first subview.
         let views = mapView.subviews
         guard let surface = views.first(where: {
             let name = NSStringFromClass(type(of: $0))
             return name.contains("MTKView") || name.contains("GLKView")
         }) ?? views.first else { return }
-        scanlines.frame = mapView.bounds
-        mapView.insertSubview(scanlines, aboveSubview: surface)
+        texture.frame = mapView.bounds
+        mapView.insertSubview(texture, aboveSubview: surface)
     }
 
-    /// One tile of the scanline pattern: three device pixels tall, the top
-    /// pixel a faint navy line.
-    private static func scanlineTile() -> UIImage {
+    /// One tile of the screen texture, three device pixels square.
+    /// Scanlines: the top pixel row is a faint navy line. Dots: the last
+    /// pixel row and column are dark, leaving a 2x2 "LED" in each tile.
+    private static func textureTile(dots: Bool) -> UIImage {
         let scale = UIScreen.main.scale
-        let size = CGSize(width: 1, height: 3 / scale)
+        let px = 1 / scale
+        let size = CGSize(width: 3 * px, height: 3 * px)
         UIGraphicsBeginImageContextWithOptions(size, false, scale)
         defer { UIGraphicsEndImageContext() }
-        Theme.screenInk.withAlphaComponent(0.13).setFill()
-        UIRectFill(CGRect(x: 0, y: 0, width: 1, height: 1 / scale))
+        if dots {
+            UIColor(white: 0, alpha: 0.22).setFill()
+            UIRectFill(CGRect(x: 0, y: 2 * px, width: 3 * px, height: px))
+            UIRectFill(CGRect(x: 2 * px, y: 0, width: px, height: 2 * px))
+        } else {
+            Theme.walkerNavy.withAlphaComponent(0.13).setFill()
+            UIRectFill(CGRect(x: 0, y: 0, width: 3 * px, height: px))
+        }
         return UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
     }
 
@@ -200,11 +223,11 @@ final class MapController: NSObject, MLNMapViewDelegate {
 
     func mapView(styleForDefaultUserLocationAnnotationView mapView: MLNMapView) -> MLNUserLocationAnnotationViewStyle {
         let s = MLNUserLocationAnnotationViewStyle()
-        s.puckFillColor = Theme.black
-        s.puckArrowFillColor = Theme.cyan
-        s.puckShadowColor = Theme.cyan
+        s.puckFillColor = Theme.onFg
+        s.puckArrowFillColor = Theme.fg
+        s.puckShadowColor = Theme.fg
         s.puckShadowOpacity = 0.6
-        s.haloFillColor = Theme.cyan
+        s.haloFillColor = Theme.fg
         return s
     }
 
@@ -277,7 +300,10 @@ final class MapController: NSObject, MLNMapViewDelegate {
     private func applyNavigationLook() {
         guard styleLoaded, let style = mapView.style else { return }
         if let dim = style.layer(withIdentifier: "nav-dim") as? MLNFillStyleLayer {
-            dim.fillOpacity = NSExpression(forConstantValue: navigating ? 0.55 : 0.0)
+            // In the WALKER world the map stays mostly visible while you
+            // navigate; the route is still the only white line on it.
+            let veil = Settings.shared.renderMode.look == .standard ? 0.55 : 0.4
+            dim.fillOpacity = NSExpression(forConstantValue: navigating ? veil : 0.0)
         }
         let hide = navigating && Settings.shared.hideLabelsWhileNavigating
         for layer in style.layers {

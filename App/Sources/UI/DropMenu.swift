@@ -1,6 +1,6 @@
 import UIKit
 
-/// A small menu drawn by the app itself (black panel, cyan rows), used
+/// A small menu drawn by the app itself (themed panel and rows), used
 /// instead of UIAlertController action sheets so it always matches the app
 /// and is not restyled by system appearance tweaks.
 final class DropMenu: UIView {
@@ -105,13 +105,13 @@ private final class MenuRow: UIControl {
     override var isHighlighted: Bool { didSet { setNeedsDisplay() } }
 
     override func draw(_ rect: CGRect) {
-        let fg = isHighlighted ? Theme.black : Theme.cyan
+        let fg = isHighlighted ? Theme.onFg : Theme.fg
         if isHighlighted {
-            Theme.cyan.setFill()
+            Theme.fg.setFill()
             UIRectFill(bounds)
         }
         if separator {
-            Theme.cyanDim.setFill()
+            Theme.fgDim.setFill()
             UIRectFill(CGRect(x: 12, y: 0, width: bounds.width - 24, height: Theme.hairline))
         }
         let s: CGFloat = 20

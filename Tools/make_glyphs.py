@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Build the "Screen Mono" map label font used by the SCREEN style.
+"""Build the "Walker Mono" map label font used by the WALKER styles.
 
     pip install fonttools freetype-py numpy scipy
-    python3 Tools/make_glyphs.py Branding/fonts/VT323-Regular.ttf
+    python3 Tools/make_glyphs.py App/Resources/Fonts/VT323-Regular.ttf
 
 MapLibre draws labels from signed-distance-field (SDF) glyph files, one
 protobuf per 256 code points. This script renders every character the pixel
 font (VT323, SIL OFL) has as an SDF and merges it over the bundled
-"Noto Sans Regular" ranges, writing App/Resources/Glyphs/Screen Mono/.
+"Noto Sans Regular" ranges, writing App/Resources/Glyphs/Walker Mono/.
 Characters VT323 does not have (Cyrillic, Arabic, Thai, ...) therefore still
 appear, in Noto Sans, instead of disappearing.
 
@@ -32,7 +32,7 @@ from scipy.ndimage import distance_transform_edt
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GLYPHS = os.path.join(ROOT, "App", "Resources", "Glyphs")
 BASE = "Noto Sans Regular"
-NAME = "Screen Mono"
+NAME = "Walker Mono"
 
 SIZE, BUFFER, RADIUS, CUTOFF, TOP_OFFSET = 24, 3, 8.0, 0.25, 26
 OVERSAMPLE = 8

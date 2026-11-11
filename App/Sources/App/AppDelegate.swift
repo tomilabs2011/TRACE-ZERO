@@ -14,13 +14,48 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         PackStore.shared.reload()
         PackStore.shared.startWatching()
 
+        Theme.apply(Settings.shared.renderMode.look)
         let w = UIWindow(frame: UIScreen.main.bounds)
-        w.backgroundColor = .black
-        w.tintColor = Theme.cyan
+        w.backgroundColor = Theme.background
+        w.tintColor = Theme.fg
         w.rootViewController = MainViewController()
         w.makeKeyAndVisible()
         window = w
+        NotificationCenter.default.addObserver(self, selector: #selector(settingsChanged),
+                                               name: Settings.didChange, object: nil)
         return true
+    }
+
+    @objc private func settingsChanged() {
+        guard Settings.shared.renderMode.look != Theme.look else { return }
+        // Not inside the notification: the old screen is still handling it.
+        DispatchQueue.main.async { self.applyLook() }
+    }
+
+    /// Rebuilds the interface in the look of the current map style (WALKER
+    /// moves the whole app into its own colours and font). Navigation and
+    /// everything else that matters lives outside the screen (Navigator,
+    /// Settings, PackStore), so a fresh screen picks it up; an open place
+    /// card or route preview is closed. Settings stays open if it was.
+    private func applyLook() {
+        let look = Settings.shared.renderMode.look
+        guard look != Theme.look, let w = window else { return }
+        Theme.apply(look)
+        var reopenSettings = false
+        if let presented = w.rootViewController?.presentedViewController {
+            reopenSettings = (presented as? UINavigationController)?.viewControllers.first is SettingsViewController
+            presented.dismiss(animated: false)
+        }
+        let root = MainViewController()
+        w.backgroundColor = Theme.background
+        w.tintColor = Theme.fg
+        UIView.transition(with: w, duration: 0.3, options: .transitionCrossDissolve, animations: {
+            w.rootViewController = root
+        }, completion: { _ in
+            if reopenSettings {
+                root.present(UINavigationController.themed(root: SettingsViewController()), animated: false)
+            }
+        })
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {

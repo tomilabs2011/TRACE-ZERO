@@ -42,9 +42,9 @@ final class SettingsViewController: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        tableView.backgroundColor = .black
-        tableView.separatorColor = Theme.cyanFaint
-        tableView.indicatorStyle = .white
+        tableView.backgroundColor = Theme.background
+        tableView.separatorColor = Theme.fgFaint
+        tableView.indicatorStyle = Theme.scrollIndicator
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .done, target: self,
                                                             action: #selector(done))
     }
@@ -68,24 +68,26 @@ final class SettingsViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
-        (view as? UITableViewHeaderFooterView)?.textLabel?.textColor = Theme.cyan
+        (view as? UITableViewHeaderFooterView)?.textLabel?.textColor = Theme.fg
     }
 
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return indexPath.section == 3 ? 120 : 56
+        // the pixel font of the WALKER look is taller per line
+        if indexPath.section == 3 { return Theme.look == .standard ? 120 : 150 }
+        return Theme.look == .standard ? 56 : 68
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
         cell.backgroundColor = Theme.panel
-        cell.tintColor = Theme.cyan
-        cell.textLabel?.textColor = Theme.cyan
+        cell.tintColor = Theme.fg
+        cell.textLabel?.textColor = Theme.fg
         cell.textLabel?.font = Theme.font(17, weight: .demi)
-        cell.detailTextLabel?.textColor = Theme.cyanDim
+        cell.detailTextLabel?.textColor = Theme.fgDim
         cell.detailTextLabel?.font = Theme.font(12, weight: .regular)
         cell.detailTextLabel?.numberOfLines = 0
         let sel = UIView()
-        sel.backgroundColor = Theme.cyanFaint
+        sel.backgroundColor = Theme.fgFaint
         cell.selectedBackgroundView = sel
         switch indexPath.section {
         case 0:
@@ -98,7 +100,7 @@ final class SettingsViewController: UITableViewController {
             cell.textLabel?.text = t.title
             cell.detailTextLabel?.text = t.detail
             let sw = UISwitch()
-            sw.onTintColor = Theme.cyan
+            sw.onTintColor = Theme.fg
             sw.isOn = t.get()
             sw.tag = indexPath.section * 100 + indexPath.row
             sw.addTarget(self, action: #selector(toggled(_:)), for: .valueChanged)
@@ -147,9 +149,9 @@ final class StepsViewController: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        tableView.backgroundColor = .black
-        tableView.separatorColor = Theme.cyanFaint
-        tableView.indicatorStyle = .white
+        tableView.backgroundColor = Theme.background
+        tableView.separatorColor = Theme.fgFaint
+        tableView.indicatorStyle = Theme.scrollIndicator
         tableView.rowHeight = 60
         tableView.tableFooterView = UIView()
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .done, target: self,
@@ -165,10 +167,10 @@ final class StepsViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let m = route.maneuvers[firstIndex + indexPath.row]
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: nil)
-        cell.backgroundColor = .black
+        cell.backgroundColor = Theme.background
         cell.selectionStyle = .none
         cell.textLabel?.text = Instructions.sentence(m)
-        cell.textLabel?.textColor = Theme.cyan
+        cell.textLabel?.textColor = Theme.fg
         cell.textLabel?.font = Theme.font(16, weight: .demi)
         cell.textLabel?.numberOfLines = 2
         // distance of the leg that follows this instruction
@@ -176,12 +178,12 @@ final class StepsViewController: UITableViewController {
             ? route.maneuvers[firstIndex + indexPath.row + 1].distanceFromStart : route.distance
         let leg = nextDist - m.distanceFromStart
         cell.detailTextLabel?.text = m.kind == .arrive ? "" : "then \(Format.distance(leg))"
-        cell.detailTextLabel?.textColor = Theme.cyanDim
+        cell.detailTextLabel?.textColor = Theme.fgDim
         cell.detailTextLabel?.font = Theme.numberFont(13, weight: .regular)
         cell.imageView?.image = ManeuverGlyph.image(size: CGSize(width: 34, height: 34), angle: m.glyphAngle,
                                                     uturn: m.modifier == 4 && m.kind == .turn,
                                                     roundaboutExit: m.kind == .roundabout ? m.exit : nil,
-                                                    arrive: m.kind == .arrive, color: Theme.cyan)
+                                                    arrive: m.kind == .arrive, color: Theme.fg)
         return cell
     }
 }

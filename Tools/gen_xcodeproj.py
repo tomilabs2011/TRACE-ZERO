@@ -31,7 +31,7 @@ IOS = {
     "product": "TraceZero",
     "dir": "",                                   # project folder, relative to ROOT
     "groups": [("App", "App"), ("Core", "Core")],
-    "folder_resources": ("Styles", "Glyphs"),
+    "folder_resources": ("Styles", "Glyphs", "Fonts"),
     "platform": "ios",
     "package": (MAPLIBRE_URL, MAPLIBRE_VERSION, "MapLibre"),
     "settings": {

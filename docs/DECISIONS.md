@@ -68,13 +68,17 @@ CarPlay entitlement without Apple's approval.
 **Generated Xcode projects.** `Tools/gen_xcodeproj.py` writes both
 projects, so the project settings are readable code and survive merges.
 
-**SCREEN as a fifth style, not a theme.** The light "monitor" look is one
-more style JSON generated from SOLID, so the four dark styles stay
-untouched and the route rules still apply. Its pixel font is shipped as
-MapLibre glyph files ("Screen Mono", VT323 merged over Noto) instead of a
-font fallback stack, because a local glyph URL cannot combine two font
-directories. The scanlines are a UIView pattern, not a style layer, so
-they cost nothing per frame. The app's panels stay black and cyan.
+**WALKER: a style that brings its own interface.** The two WALKER maps are
+style JSON generated from SOLID, so the four standard styles stay
+untouched and the route rules still apply. The interface follows through
+`Theme.look`: colours and fonts are read from Theme when a view is built,
+and AppDelegate rebuilds the main screen when the look changes. This is
+simpler and safer than re-colouring every live view, and nothing is lost
+because navigation state lives in `Navigator`. The map's pixel font is
+shipped as MapLibre glyph files ("Walker Mono", VT323 merged over Noto)
+instead of a font fallback stack, because a local glyph URL cannot combine
+two font directories. The screen textures are a UIView pattern, not a
+style layer, so they cost nothing per frame.
 
 ## What has been verified, and how
 

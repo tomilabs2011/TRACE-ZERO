@@ -37,13 +37,13 @@ final class MainViewController: UIViewController {
     private var authObserver: UUID?
     private var routeRequest = 0
 
-    override var preferredStatusBarStyle: UIStatusBarStyle { return .lightContent }
+    override var preferredStatusBarStyle: UIStatusBarStyle { return Theme.mapStatusBar }
 
     // MARK: setup
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .black
+        view.backgroundColor = Theme.background
         map.mapView.frame = view.bounds
         view.addSubview(map.mapView)
 
@@ -51,7 +51,7 @@ final class MainViewController: UIViewController {
         Theme.stylePanel(searchBar)
         searchBar.contentHorizontalAlignment = .left
         searchBar.titleEdgeInsets = UIEdgeInsets(top: 0, left: 40, bottom: 0, right: 8)
-        searchBar.setAttributedTitle(Theme.tracked("Search offline", size: 15, weight: .demi, color: Theme.cyanDim),
+        searchBar.setAttributedTitle(Theme.tracked("Search offline", size: 15, weight: .demi, color: Theme.fgDim),
                                      for: .normal)
         let glass = SearchGlass(frame: CGRect(x: 12, y: 12, width: 20, height: 20))
         glass.isUserInteractionEnabled = false
@@ -66,14 +66,14 @@ final class MainViewController: UIViewController {
 
         attribution.text = "© OpenStreetMap contributors"
         attribution.font = Theme.font(10, weight: .regular)
-        attribution.textColor = Theme.cyanDim
-        attribution.shadowColor = .black
+        attribution.textColor = Theme.fgDim
+        attribution.shadowColor = Theme.background
         attribution.shadowOffset = CGSize(width: 0, height: 1)
 
         emptyNotice.numberOfLines = 0
         emptyNotice.textAlignment = .center
         emptyNotice.backgroundColor = Theme.panel
-        emptyNotice.layer.borderColor = Theme.cyan.cgColor
+        emptyNotice.layer.borderColor = Theme.fg.cgColor
         emptyNotice.layer.borderWidth = 1
         emptyNotice.layer.cornerRadius = 4
         emptyNotice.clipsToBounds = true
@@ -117,9 +117,20 @@ final class MainViewController: UIViewController {
         restoreCamera()
         map.reloadStyleIfNeeded(force: true)
         if LocationService.shared.authorized { map.mapView.showsUserLocation = true }
-        LocationService.shared.set(.browse)
         modeChanged()
         packsChanged()
+        // The screen is rebuilt when the look changes (AppDelegate.applyLook);
+        // pick up a navigation that is already running.
+        if Navigator.shared.isActive {
+            navigatorStarted()
+        } else {
+            LocationService.shared.set(.browse)
+        }
+    }
+
+    deinit {
+        if let id = locationObserver { LocationService.shared.remove(id) }
+        if let id = authObserver { LocationService.shared.remove(id) }
     }
 
     private func restoreCamera() {
@@ -141,7 +152,7 @@ final class MainViewController: UIViewController {
                 text += "\n\nIn the app's folder: " + store.documentNames.prefix(6).joined(separator: ", ")
             }
             emptyNotice.attributedText = NSAttributedString(string: text, attributes: [
-                .font: Theme.font(14, weight: .demi), .foregroundColor: Theme.cyan])
+                .font: Theme.font(14, weight: .demi), .foregroundColor: Theme.fg])
             emptyNotice.isHidden = false
         } else {
             emptyNotice.isHidden = true
@@ -493,19 +504,19 @@ private final class SearchGlass: UIView {
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
     override func draw(_ rect: CGRect) {
-        Icons.draw(.search, in: bounds.insetBy(dx: 2, dy: 2), color: Theme.cyan)
+        Icons.draw(.search, in: bounds.insetBy(dx: 2, dy: 2), color: Theme.fg)
     }
 }
 
 extension UINavigationController {
-    /// Navigation controller in the black / cyan style.
+    /// Navigation controller in the current look.
     static func themed(root: UIViewController) -> UINavigationController {
         let nav = UINavigationController(rootViewController: root)
-        nav.navigationBar.barStyle = .black
+        nav.navigationBar.barStyle = Theme.barStyle
         nav.navigationBar.isTranslucent = false
-        nav.navigationBar.barTintColor = .black
-        nav.navigationBar.tintColor = Theme.cyan
-        nav.navigationBar.titleTextAttributes = [.foregroundColor: Theme.cyan, .font: Theme.font(17, weight: .bold),
+        nav.navigationBar.barTintColor = Theme.background
+        nav.navigationBar.tintColor = Theme.fg
+        nav.navigationBar.titleTextAttributes = [.foregroundColor: Theme.fg, .font: Theme.font(17, weight: .bold),
                                                  .kern: 1.5]
         nav.modalPresentationStyle = .fullScreen
         return nav

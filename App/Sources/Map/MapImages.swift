@@ -1,19 +1,22 @@
 import UIKit
 
 /// Images the styles refer to ("hatch", "hatch-water", "chevron", and for
-/// the SCREEN style "hatch-dark" and "chevron-navy"). Drawn at runtime so no
+/// the WALKER styles "hatch-navy", "hatch-cyan", "chevron-navy" and
+/// "chevron-cyan"). Drawn at runtime so no
 /// sprite sheet is needed; the preview in Tools/style-preview draws the same
 /// shapes on a canvas.
 enum MapImages {
-    static let names = ["hatch", "hatch-water", "chevron", "hatch-dark", "chevron-navy"]
+    static let names = ["hatch", "hatch-water", "chevron", "hatch-navy", "hatch-cyan", "chevron-navy", "chevron-cyan"]
 
     static func image(named name: String) -> UIImage? {
         switch name {
-        case "hatch": return hatch(size: 12, color: Theme.cyan.withAlphaComponent(0.30))
-        case "hatch-water": return hatch(size: 8, color: Theme.cyan.withAlphaComponent(0.55))
-        case "hatch-dark": return hatch(size: 10, color: Theme.screenInk.withAlphaComponent(0.35))
+        case "hatch": return hatch(size: 12, color: Theme.standardCyan.withAlphaComponent(0.30))
+        case "hatch-water": return hatch(size: 8, color: Theme.standardCyan.withAlphaComponent(0.55))
+        case "hatch-navy": return hatch(size: 10, color: Theme.walkerNavy.withAlphaComponent(0.35))
+        case "hatch-cyan": return hatch(size: 10, color: Theme.walkerCyan.withAlphaComponent(0.35))
         case "chevron": return chevron(color: .black)
-        case "chevron-navy": return chevron(color: Theme.screenInk)
+        case "chevron-navy": return chevron(color: Theme.walkerNavy)
+        case "chevron-cyan": return chevron(color: Theme.walkerCyan)
         default: return nil
         }
     }

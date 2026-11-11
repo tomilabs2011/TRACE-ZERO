@@ -2,7 +2,8 @@ import Foundation
 
 /// Map render modes. Each one is a style file in Resources/Styles.
 enum RenderMode: String, CaseIterable {
-    case outline, hatch, solid, minimal, screen
+    case outline, hatch, solid, minimal, walker
+    case walkerInverted = "walker-inverted"   // raw value = style file name
 
     var title: String {
         switch self {
@@ -10,7 +11,8 @@ enum RenderMode: String, CaseIterable {
         case .hatch: return "HATCH"
         case .solid: return "SOLID"
         case .minimal: return "MINIMAL"
-        case .screen: return "SCREEN"
+        case .walker: return "WALKER"
+        case .walkerInverted: return "WALKER INVERTED"
         }
     }
 
@@ -21,7 +23,8 @@ enum RenderMode: String, CaseIterable {
         case .hatch: return "Diagonal hatching for water and parks"
         case .solid: return "Filled areas, solid roads"
         case .minimal: return "Roads and water only; fastest and most frugal"
-        case .screen: return "Light monitor look: cyan screen, navy lines, pixel font"
+        case .walker: return "Alan Walker world: cyan screen, pixel font; the whole app"
+        case .walkerInverted: return "The same world inverted: navy screen, cyan lines"
         }
     }
 }
@@ -75,7 +78,11 @@ final class Settings {
     }
 
     var renderMode: RenderMode {
-        get { RenderMode(rawValue: d.string(forKey: "renderMode") ?? "") ?? .outline }
+        get {
+            let raw = d.string(forKey: "renderMode") ?? ""
+            if raw == "screen" { return .walker }   // the first build's name for WALKER
+            return RenderMode(rawValue: raw) ?? .outline
+        }
         set { d.set(newValue.rawValue, forKey: "renderMode"); changed() }
     }
 

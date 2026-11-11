@@ -1,10 +1,15 @@
 <!doctype html><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="/nm/maplibre-gl/dist/maplibre-gl.css">
 <style>html,body,#map{margin:0;width:100%;height:100%;background:#000}
-/* SCREEN mode texture: the same scanlines as MapController's overlay
-   (one device pixel of navy every three device pixels; pixelRatio is 2) */
-#grid{position:absolute;inset:0;pointer-events:none;display:none;
- background:repeating-linear-gradient(to bottom,rgba(11,22,80,0.13) 0 0.5px,transparent 0.5px 1.5px)}</style>
+/* WALKER screen textures, the same as MapController's overlay (pixelRatio
+   is 2, so 0.5px = one device pixel): scanlines, and for the inverted
+   style a dot-matrix grid */
+#grid{position:absolute;inset:0;pointer-events:none;display:none}
+#grid.scanlines{display:block;
+ background:repeating-linear-gradient(to bottom,rgba(11,22,80,0.13) 0 0.5px,transparent 0.5px 1.5px)}
+#grid.dot-matrix{display:block;
+ background:repeating-linear-gradient(to bottom,transparent 0 1px,rgba(0,0,0,0.22) 1px 1.5px),
+            repeating-linear-gradient(to right,transparent 0 1px,rgba(0,0,0,0.22) 1px 1.5px)}</style>
 <script src="/nm/maplibre-gl/dist/maplibre-gl.js"></script></head><body><div id="map"></div><div id="grid"></div>
 <script>
 const q = new URLSearchParams(location.search);
@@ -21,12 +26,17 @@ const IMAGES = {
      g.beginPath(); g.moveTo(16, 10); g.lineTo(32, 24); g.lineTo(16, 38); g.stroke(); }),
   'chevron-navy': img(48, 48, (g, w, h) => { g.strokeStyle = '#0B1650'; g.lineWidth = 9; g.lineCap = 'round'; g.lineJoin = 'round';
      g.beginPath(); g.moveTo(16, 10); g.lineTo(32, 24); g.lineTo(16, 38); g.stroke(); }),
-  'hatch-dark': img(20, 20, (g, w, h) => { g.strokeStyle = 'rgba(11,22,80,0.35)'; g.lineWidth = 2;
+  'chevron-cyan': img(48, 48, (g, w, h) => { g.strokeStyle = '#3ADCE8'; g.lineWidth = 9; g.lineCap = 'round'; g.lineJoin = 'round';
+     g.beginPath(); g.moveTo(16, 10); g.lineTo(32, 24); g.lineTo(16, 38); g.stroke(); }),
+  'hatch-cyan': img(20, 20, (g, w, h) => { g.strokeStyle = 'rgba(58,220,232,0.35)'; g.lineWidth = 2;
+     g.beginPath(); g.moveTo(-2, h + 2); g.lineTo(w + 2, -2); g.stroke(); }),
+  'hatch-navy': img(20, 20, (g, w, h) => { g.strokeStyle = 'rgba(11,22,80,0.35)'; g.lineWidth = 2;
      g.beginPath(); g.moveTo(-2, h + 2); g.lineTo(w + 2, -2); g.stroke(); }),
 };
 (async () => {
   const style = await (await fetch('/app/Styles/' + mode + '.json')).json();
-  if (mode === 'screen') document.getElementById('grid').style.display = 'block';
+  const overlay = (style.metadata || {})['tracezero:overlay'];
+  if (overlay) document.getElementById('grid').className = overlay;
   style.sources.omt = { type: 'vector', tiles: [location.origin + '/tiles/{z}/{x}/{y}.pbf'], maxzoom: 16 };
   style.glyphs = location.origin + '/app/Glyphs/{fontstack}/{range}.pbf';
   const route = await (await fetch('/route.geojson')).json();
@@ -43,7 +53,7 @@ const IMAGES = {
       const next = route.features.find(f => f.geometry.type === 'Point' && line.findIndex(c => c[0] === f.geometry.coordinates[0] && c[1] === f.geometry.coordinates[1]) > split);
       if (next) map.getSource('maneuver').setData(next);
       map.getSource('dest').setData({ type: 'Feature', geometry: { type: 'Point', coordinates: line[line.length - 1] } });
-      map.setPaintProperty('nav-dim', 'fill-opacity', 0.55);
+      map.setPaintProperty('nav-dim', 'fill-opacity', mode.startsWith('walker') ? 0.4 : 0.55);
     } else if (q.get('pin') === '1') {
       map.getSource('pin').setData({ type: 'Feature', geometry: { type: 'Point', coordinates: [24.9445, 60.1690] } });
     }

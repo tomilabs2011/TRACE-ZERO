@@ -28,6 +28,10 @@
 	<true/>
 	<key>UIFileSharingEnabled</key>
 	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Fonts/VT323-Regular.ttf</string>
+	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Your position is used to show you on the map and to guide you. It never leaves the phone.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

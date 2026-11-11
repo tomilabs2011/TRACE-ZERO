@@ -3,19 +3,20 @@
 
     python3 Tools/make_styles.py
 
-writes App/Resources/Styles/{outline,hatch,solid,minimal,screen}.json.
+writes App/Resources/Styles/{outline,hatch,solid,minimal,walker,walker-inverted}.json.
 
-All five styles read OpenMapTiles-schema vector tiles (what Planetiler
-produces) and share the same navigation layers. The first four use two
-colours on black: CYAN for the map, RED only for the destination. SCREEN
-is the inverse, "monitor" look (see screen_style()).
+All styles read OpenMapTiles-schema vector tiles (what Planetiler produces)
+and share the same navigation layers. The first four use two colours on
+black: CYAN for the map, RED only for the destination. The two WALKER
+styles are the "Alan Walker" monitor look (see walker_style()).
 
 Placeholders filled in by the app at runtime (see StyleComposer.swift):
   {TILES}   file URL of a pack's map.pmtiles (the "omt" source is
             duplicated once per installed pack)
   {GLYPHS}  file URL of the bundled glyph directory
 Images added at runtime (MapImages.swift): "hatch", "hatch-water",
-"chevron", and for SCREEN "hatch-dark" and "chevron-navy".
+"chevron", and for the WALKER styles "hatch-navy", "hatch-cyan",
+"chevron-navy" and "chevron-cyan".
 
 How the route stands out from other roads (the most important rule of the
 design):
@@ -38,17 +39,20 @@ FONT = ["Noto Sans Regular"]
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "App", "Resources", "Styles")
 
-MODES = ["outline", "hatch", "solid", "minimal", "screen"]
+MODES = ["outline", "hatch", "solid", "minimal", "walker", "walker-inverted"]
 
-# SCREEN mode: the look of the phone map in Alan Walker's "Alone" video -
-# a bright cyan screen, navy line work, royal-indigo water, a pixel font and
-# one warm accent (coral) for the route and the destination ring.
-SCREEN_BG = "#3ADCE8"
-SCREEN_INK = "#0B1650"
-SCREEN_WATER = "#2233B8"
-SCREEN_WATER_EDGE = "#15218C"
-SCREEN_ACCENT = "#FF6B7E"
-SCREEN_FONT = ["Screen Mono"]   # VT323 merged over Noto Sans, see Tools/make_glyphs.py
+# WALKER: the look of the phone map in Alan Walker's "Alone" video - a bright
+# cyan screen, navy line work, royal-indigo water and a pixel font.
+# WALKER INVERTED swaps screen and ink: navy screen, cyan lines, bright cyan
+# water, like a dot-matrix display. In both, coral is used only for the
+# destination ring and the route is the only white thing on the map.
+WALKER_CYAN = "#3ADCE8"
+WALKER_NAVY = "#0B1650"
+WALKER_INDIGO = "#2233B8"
+WALKER_INDIGO_EDGE = "#15218C"
+WALKER_WHITE = "#FFFFFF"
+WALKER_CORAL = "#FF6B7E"
+WALKER_FONT = ["Walker Mono"]   # VT323 merged over Noto Sans, see Tools/make_glyphs.py
 
 
 def zoom(base, *stops):
@@ -387,61 +391,70 @@ def recolor(obj, mapping):
     return obj
 
 
-def screen_style():
-    """SCREEN: the SOLID layout (same layers, widths and zoom rules) with the
-    palette inverted, the pixel font, and a coral route and destination.
+def walker_style(inverted):
+    """WALKER (inverted=False) and WALKER INVERTED: the SOLID layout (same
+    layers, widths and zoom rules) recoloured, with the pixel font.
 
-    The route stays the most visible thing on the map: coral is the only
-    warm colour, the route is a coral line inside a navy band with a coral
-    glow, and the navy chevrons are on it alone."""
-    style = recolor(build("solid"), {CYAN.upper(): SCREEN_INK, BLACK.upper(): SCREEN_BG})
+    The route keeps every rule from the top of this file; its colour is
+    white, which nothing else on these maps uses:
+      WALKER           navy glow, white band, navy core, cyan chevrons
+      WALKER INVERTED  white glow, navy band, white core, navy chevrons
+    """
+    screen, ink = (WALKER_NAVY, WALKER_CYAN) if inverted else (WALKER_CYAN, WALKER_NAVY)
+    style = recolor(build("solid"), {CYAN.upper(): ink, BLACK.upper(): screen})
     for layer in style["layers"]:
         lid, paint, layout = layer["id"], layer.get("paint", {}), layer.get("layout", {})
         if "text-font" in layout:
-            layout["text-font"] = SCREEN_FONT
+            layout["text-font"] = WALKER_FONT
         if lid == "water-fill":
-            paint.update({"fill-color": SCREEN_WATER, "fill-opacity": 1.0})
+            paint.update({"fill-color": WALKER_CYAN if inverted else WALKER_INDIGO, "fill-opacity": 1.0})
         elif lid == "water-edge":
-            paint.update({"line-color": SCREEN_WATER_EDGE, "line-opacity": 1.0})
+            paint.update({"line-color": WALKER_CYAN if inverted else WALKER_INDIGO_EDGE, "line-opacity": 1.0})
+        elif lid == "waterway":
+            paint.update({"line-color": WALKER_CYAN if inverted else WALKER_INDIGO, "line-opacity": 1.0})
+        elif lid == "water-name" and inverted:
+            # sits on bright water: navy letters, cyan halo
+            paint.update({"text-color": WALKER_NAVY, "text-halo-color": WALKER_CYAN})
         elif lid in ("landcover-fill", "park-fill", "landuse-fill"):
             paint.pop("fill-color", None)
             paint.pop("fill-opacity", None)
-            paint["fill-pattern"] = "hatch-dark"
+            paint["fill-pattern"] = "hatch-cyan" if inverted else "hatch-navy"
             layer["minzoom"] = 10
-        elif lid == "waterway":
-            paint.update({"line-color": SCREEN_WATER, "line-opacity": 1.0})
         elif lid == "building-fill":
-            # line work, not grey blocks: buildings are outlines with a faint tint
+            # line work, not blocks: outlines with a faint tint
             paint["fill-opacity"] = lin(14, 0.0, 16, 0.06)
         elif lid == "route-glow":
-            paint.update({"line-color": SCREEN_ACCENT, "line-opacity": 0.5})
+            paint.update({"line-color": WALKER_WHITE if inverted else WALKER_NAVY,
+                          "line-opacity": 0.35 if inverted else 0.3})
         elif lid == "route-gap":
-            paint["line-color"] = SCREEN_INK
+            paint["line-color"] = WALKER_NAVY if inverted else WALKER_WHITE
         elif lid == "route-core":
-            paint["line-color"] = SCREEN_ACCENT
+            paint["line-color"] = WALKER_WHITE if inverted else WALKER_NAVY
         elif lid == "route-arrows":
-            layout["icon-image"] = "chevron-navy"
+            layout["icon-image"] = "chevron-navy" if inverted else "chevron-cyan"
         elif lid == "dest-halo":
             # the soft coral ring from the video
-            paint.update({"circle-color": SCREEN_ACCENT, "circle-opacity": 0.3, "circle-blur": 0.6,
+            paint.update({"circle-color": WALKER_CORAL, "circle-opacity": 0.3, "circle-blur": 0.6,
                           "circle-radius": zoom(1.3, 10, 18, 18, 30)})
         elif lid == "dest-dot":
-            # a donut: screen-coloured centre so it reads as a ring even
-            # where the coral route ends inside it
-            paint.update({"circle-color": SCREEN_BG, "circle-opacity": 1.0,
-                          "circle-stroke-color": SCREEN_ACCENT, "circle-stroke-width": 6,
+            # a donut: screen-coloured centre, so it reads as a ring even
+            # where the route ends inside it
+            paint.update({"circle-color": screen, "circle-opacity": 1.0,
+                          "circle-stroke-color": WALKER_CORAL, "circle-stroke-width": 6,
                           "circle-radius": zoom(1.3, 10, 9, 18, 14)})
         elif lid == "dest-center":
-            paint["circle-color"] = SCREEN_INK
-    style["name"] = "TRACE//ZERO screen"
-    style["metadata"]["tracezero:mode"] = "screen"
-    style["metadata"]["tracezero:overlay"] = "scanlines"   # MapController adds the screen texture
+            paint["circle-color"] = ink
+    name = "walker-inverted" if inverted else "walker"
+    style["name"] = f"TRACE//ZERO {name}"
+    style["metadata"]["tracezero:mode"] = name
+    # MapController lays the screen texture over the map
+    style["metadata"]["tracezero:overlay"] = "dot-matrix" if inverted else "scanlines"
     return style
 
 
 def build(mode):
-    if mode == "screen":
-        return screen_style()
+    if mode in ("walker", "walker-inverted"):
+        return walker_style(mode == "walker-inverted")
     layers = []
     layers += background()
     layers += greens(mode)

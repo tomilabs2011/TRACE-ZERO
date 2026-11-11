@@ -103,7 +103,7 @@ final class CarPlayController: NSObject, CPMapTemplateDelegate, CPSearchTemplate
         let size = CGSize(width: 32, height: 32)
         UIGraphicsBeginImageContextWithOptions(size, false, 0)
         defer { UIGraphicsEndImageContext() }
-        Icons.draw(i, in: CGRect(origin: .zero, size: size).insetBy(dx: 5, dy: 5), color: Theme.cyan)
+        Icons.draw(i, in: CGRect(origin: .zero, size: size).insetBy(dx: 5, dy: 5), color: Theme.standardCyan)
         return UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
     }
 

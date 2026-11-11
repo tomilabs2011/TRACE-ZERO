@@ -17,14 +17,14 @@ final class ManeuverGlyphView: UIView {
         guard let m = maneuver else { return }
         ManeuverGlyph.draw(in: bounds.insetBy(dx: 2, dy: 2), angle: m.glyphAngle, uturn: m.modifier == 4 && m.kind == .turn,
                            roundaboutExit: m.kind == .roundabout ? m.exit : nil, arrive: m.kind == .arrive,
-                           color: Theme.cyan, dimColor: Theme.cyanDim)
+                           color: Theme.fg, dimColor: Theme.fgDim)
     }
 }
 
 private func makeLabel(_ size: CGFloat, _ weight: Theme.Weight, lines: Int = 1, numbers: Bool = false) -> UILabel {
     let l = UILabel()
     l.font = numbers ? Theme.numberFont(size, weight: weight) : Theme.font(size, weight: weight)
-    l.textColor = Theme.cyan
+    l.textColor = Theme.fg
     l.numberOfLines = lines
     l.adjustsFontSizeToFitWidth = lines == 1
     l.minimumScaleFactor = 0.6
@@ -46,8 +46,8 @@ final class NavBannerView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         Theme.stylePanel(self)
-        thenBar.backgroundColor = Theme.cyanFaint
-        thenLabel.textColor = Theme.cyan
+        thenBar.backgroundColor = Theme.fgFaint
+        thenLabel.textColor = Theme.fg
         for v in [glyph, distance, primary, road, thenBar, thenGlyph, thenLabel] { addSubview(v) }
     }
 
@@ -158,7 +158,7 @@ final class PlaceCardView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         Theme.stylePanel(self)
-        subtitle.textColor = Theme.cyanDim
+        subtitle.textColor = Theme.fgDim
         subtitle.adjustsFontSizeToFitWidth = false
         for v in [title, subtitle, distance, modes, routeButton, closeButton] { addSubview(v) }
     }
@@ -190,12 +190,12 @@ final class RoutePreviewView: UIView {
     let startButton = TextButton(title: "START", filled: true)
     let stepsButton = IconButton(icon: .list)
     let closeButton = IconButton(icon: .close)
-    let spinner = UIActivityIndicatorView(style: .white)
+    let spinner = UIActivityIndicatorView(style: Theme.spinner)
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         Theme.stylePanel(self)
-        spinner.color = Theme.cyan
+        spinner.color = Theme.fg
         spinner.hidesWhenStopped = true
         for v in [time, detail, message, modes, startButton, stepsButton, closeButton, spinner] { addSubview(v) }
     }
@@ -251,9 +251,9 @@ final class RoutePreviewView: UIView {
 final class Toast {
     static func show(_ text: String, in view: UIView, top: CGFloat) {
         let l = UILabel()
-        l.attributedText = Theme.tracked(text, size: 14, weight: .bold, color: Theme.black, spacing: 1.2)
+        l.attributedText = Theme.tracked(text, size: 14, weight: .bold, color: Theme.onFg, spacing: 1.2)
         l.textAlignment = .center
-        l.backgroundColor = Theme.cyan
+        l.backgroundColor = Theme.fg
         l.layer.cornerRadius = 4
         l.clipsToBounds = true
         l.numberOfLines = 2

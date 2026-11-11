@@ -14,7 +14,7 @@ final class SearchViewController: UIViewController, UITableViewDataSource, UITab
     private var results: [SearchResult] = []
     private var pending: DispatchWorkItem?
 
-    override var preferredStatusBarStyle: UIStatusBarStyle { return .lightContent }
+    override var preferredStatusBarStyle: UIStatusBarStyle { return Theme.screenStatusBar }
 
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -25,15 +25,15 @@ final class SearchViewController: UIViewController, UITableViewDataSource, UITab
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .black
+        view.backgroundColor = Theme.background
 
         Theme.stylePanel(field)
-        field.textColor = Theme.cyan
-        field.tintColor = Theme.cyan
+        field.textColor = Theme.fg
+        field.tintColor = Theme.fg
         field.font = Theme.font(17, weight: .demi)
         field.attributedPlaceholder = Theme.tracked("Address, place, street, POI, lat/lon", size: 14,
-                                                    color: Theme.cyanDim, spacing: 0.5)
-        field.keyboardAppearance = .dark
+                                                    color: Theme.fgDim, spacing: 0.5)
+        field.keyboardAppearance = Theme.keyboard
         field.autocorrectionType = .no
         field.autocapitalizationType = .none
         field.returnKeyType = .search
@@ -46,9 +46,9 @@ final class SearchViewController: UIViewController, UITableViewDataSource, UITab
         cancel.setAttributedTitle(Theme.tracked("Close", size: 14, weight: .bold), for: .normal)
         cancel.addTarget(self, action: #selector(close), for: .touchUpInside)
 
-        table.backgroundColor = .black
-        table.separatorColor = Theme.cyanFaint
-        table.indicatorStyle = .white
+        table.backgroundColor = Theme.background
+        table.separatorColor = Theme.fgFaint
+        table.indicatorStyle = Theme.scrollIndicator
         table.keyboardDismissMode = .onDrag
         table.dataSource = self
         table.delegate = self
@@ -58,7 +58,7 @@ final class SearchViewController: UIViewController, UITableViewDataSource, UITab
         info.numberOfLines = 0
         info.textAlignment = .center
         info.font = Theme.font(14, weight: .demi)
-        info.textColor = Theme.cyanDim
+        info.textColor = Theme.fgDim
         info.text = PackStore.shared.packs.isEmpty
             ? "No map packs installed."
             : "Searching \(PackStore.shared.packs.map { $0.name }.joined(separator: ", ")) offline."
@@ -151,22 +151,22 @@ private final class ResultCell: UITableViewCell {
 
     init() {
         super.init(style: .default, reuseIdentifier: "r")
-        backgroundColor = .black
+        backgroundColor = Theme.background
         let sel = UIView()
-        sel.backgroundColor = Theme.cyanFaint
+        sel.backgroundColor = Theme.fgFaint
         selectedBackgroundView = sel
         tag_.font = Theme.font(10, weight: .bold)
-        tag_.textColor = Theme.black
-        tag_.backgroundColor = Theme.cyan
+        tag_.textColor = Theme.onFg
+        tag_.backgroundColor = Theme.fg
         tag_.textAlignment = .center
         tag_.layer.cornerRadius = 2
         tag_.clipsToBounds = true
         title.font = Theme.font(17, weight: .demi)
-        title.textColor = Theme.cyan
+        title.textColor = Theme.fg
         subtitle.font = Theme.font(13, weight: .regular)
-        subtitle.textColor = Theme.cyanDim
+        subtitle.textColor = Theme.fgDim
         distance.font = Theme.numberFont(13, weight: .demi)
-        distance.textColor = Theme.cyan
+        distance.textColor = Theme.fg
         distance.textAlignment = .right
         for v in [tag_, title, subtitle, distance] { contentView.addSubview(v) }
     }
