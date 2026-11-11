@@ -1,25 +1,28 @@
 import UIKit
 
-/// Images the styles refer to ("hatch", "hatch-water", "chevron"). Drawn at
-/// runtime so no sprite sheet is needed; the render test in Tools/ draws the
-/// same shapes on a canvas.
+/// Images the styles refer to ("hatch", "hatch-water", "chevron", and for
+/// the SCREEN style "hatch-dark" and "chevron-navy"). Drawn at runtime so no
+/// sprite sheet is needed; the preview in Tools/style-preview draws the same
+/// shapes on a canvas.
 enum MapImages {
-    static let names = ["hatch", "hatch-water", "chevron"]
+    static let names = ["hatch", "hatch-water", "chevron", "hatch-dark", "chevron-navy"]
 
     static func image(named name: String) -> UIImage? {
         switch name {
-        case "hatch": return hatch(size: 12, alpha: 0.30)
-        case "hatch-water": return hatch(size: 8, alpha: 0.55)
-        case "chevron": return chevron()
+        case "hatch": return hatch(size: 12, color: Theme.cyan.withAlphaComponent(0.30))
+        case "hatch-water": return hatch(size: 8, color: Theme.cyan.withAlphaComponent(0.55))
+        case "hatch-dark": return hatch(size: 10, color: Theme.screenInk.withAlphaComponent(0.35))
+        case "chevron": return chevron(color: .black)
+        case "chevron-navy": return chevron(color: Theme.screenInk)
         default: return nil
         }
     }
 
     /// One diagonal line per tile; tiles join into continuous 45° hatching.
-    private static func hatch(size: CGFloat, alpha: CGFloat) -> UIImage {
+    private static func hatch(size: CGFloat, color: UIColor) -> UIImage {
         let s = CGSize(width: size, height: size)
         return render(s) { ctx in
-            ctx.setStrokeColor(Theme.cyan.withAlphaComponent(alpha).cgColor)
+            ctx.setStrokeColor(color.cgColor)
             ctx.setLineWidth(1)
             ctx.move(to: CGPoint(x: -1, y: size + 1))
             ctx.addLine(to: CGPoint(x: size + 1, y: -1))
@@ -27,12 +30,12 @@ enum MapImages {
         }
     }
 
-    /// Black ">" chevron. Line-placed icons point along the line's direction,
+    /// ">" chevron. Line-placed icons point along the line's direction,
     /// which is +x in image space, so the chevron points right.
-    private static func chevron() -> UIImage {
+    private static func chevron(color: UIColor) -> UIImage {
         let s = CGSize(width: 24, height: 24)
         return render(s) { ctx in
-            ctx.setStrokeColor(UIColor.black.cgColor)
+            ctx.setStrokeColor(color.cgColor)
             ctx.setLineWidth(4.5)
             ctx.setLineCap(.round)
             ctx.setLineJoin(.round)

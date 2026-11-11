@@ -11,6 +11,10 @@ enum Theme {
     static let red = UIColor(red: 1.0, green: 0.169, blue: 0.227, alpha: 1.0)       // #FF2B3A
     static let black = UIColor.black
     static let panel = UIColor(white: 0.0, alpha: 0.88)
+    /// Navy line colour of the SCREEN map style (#0B1650, see Tools/make_styles.py).
+    static let screenInk = UIColor(red: 11 / 255.0, green: 22 / 255.0, blue: 80 / 255.0, alpha: 1.0)
+    /// Background of the SCREEN map style (#3ADCE8).
+    static let screenBackground = UIColor(red: 58 / 255.0, green: 220 / 255.0, blue: 232 / 255.0, alpha: 1.0)
 
     /// Hairline width that is exactly one device pixel.
     static var hairline: CGFloat { return 1.0 / UIScreen.main.scale }

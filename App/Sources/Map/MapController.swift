@@ -32,6 +32,8 @@ final class MapController: NSObject, MLNMapViewDelegate {
     private(set) var navigating = false
     /// Top/bottom screen space covered by panels (points).
     private var overlayInsets = UIEdgeInsets.zero
+    /// Scanline texture over the map in the SCREEN style (see applyScreenLook).
+    private let scanlines = UIView()
     let isCarPlay: Bool
 
     init(frame: CGRect, carPlay: Bool = false) {
@@ -52,6 +54,11 @@ final class MapController: NSObject, MLNMapViewDelegate {
         mapView.locationManager = locationAdapter
         mapView.prefetchesTiles = false             // nothing to prefetch from a network
         applyFrameRate()
+        scanlines.isUserInteractionEnabled = false
+        scanlines.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        scanlines.backgroundColor = UIColor(patternImage: MapController.scanlineTile())
+        scanlines.isAccessibilityElement = false
+        applyScreenLook()
         if !carPlay {
             let lp = UILongPressGestureRecognizer(target: self, action: #selector(longPress(_:)))
             mapView.addGestureRecognizer(lp)
@@ -75,9 +82,45 @@ final class MapController: NSObject, MLNMapViewDelegate {
 
     @objc private func settingsChanged() {
         applyFrameRate()
+        applyScreenLook()
         reloadStyleIfNeeded(force: composedMode != Settings.shared.renderMode)
         applyNavigationLook()
         applyTilt()
+    }
+
+    /// The SCREEN style imitates a monitor: a light map under fine horizontal
+    /// scanlines. The texture is a plain view right above MapLibre's drawing
+    /// surface (below the compass), so it costs one blended layer and nothing
+    /// per frame. Other styles remove it.
+    private func applyScreenLook() {
+        let screen = Settings.shared.renderMode == .screen
+        mapView.backgroundColor = screen ? Theme.screenBackground : .black
+        mapView.tintColor = screen ? Theme.screenInk : Theme.cyan
+        if !screen {
+            scanlines.removeFromSuperview()
+            return
+        }
+        guard scanlines.superview == nil else { return }
+        // MapLibre's drawing surface (an MTKView or GLKView) is its first subview.
+        let views = mapView.subviews
+        guard let surface = views.first(where: {
+            let name = NSStringFromClass(type(of: $0))
+            return name.contains("MTKView") || name.contains("GLKView")
+        }) ?? views.first else { return }
+        scanlines.frame = mapView.bounds
+        mapView.insertSubview(scanlines, aboveSubview: surface)
+    }
+
+    /// One tile of the scanline pattern: three device pixels tall, the top
+    /// pixel a faint navy line.
+    private static func scanlineTile() -> UIImage {
+        let scale = UIScreen.main.scale
+        let size = CGSize(width: 1, height: 3 / scale)
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        defer { UIGraphicsEndImageContext() }
+        Theme.screenInk.withAlphaComponent(0.13).setFill()
+        UIRectFill(CGRect(x: 0, y: 0, width: 1, height: 1 / scale))
+        return UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
     }
 
     private var appliedTilt: Bool?
@@ -143,6 +186,7 @@ final class MapController: NSObject, MLNMapViewDelegate {
 
     func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
         styleLoaded = true
+        applyScreenLook()
         for name in MapImages.names {
             if let img = MapImages.image(named: name) { style.setImage(img, forName: name) }
         }

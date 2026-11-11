@@ -91,12 +91,7 @@ final class SettingsViewController: UITableViewController {
         case 0:
             let m = RenderMode.allCases[indexPath.row]
             cell.textLabel?.text = m.title
-            cell.detailTextLabel?.text = [
-                "Wireframe roads, outlined areas",
-                "Diagonal hatching for water and parks",
-                "Filled areas, solid roads",
-                "Roads and water only; fastest and most frugal",
-            ][indexPath.row]
+            cell.detailTextLabel?.text = m.detail
             cell.accessoryType = m == Settings.shared.renderMode ? .checkmark : .none
         case 1, 2:
             let t = toggles[indexPath.section - 1][indexPath.row]
@@ -115,7 +110,7 @@ final class SettingsViewController: UITableViewController {
             cell.textLabel?.text = "TRACE//ZERO \(v) (\(b))"
             cell.detailTextLabel?.text = "Offline maps and navigation. Map data © OpenStreetMap contributors, " +
                 "available under the Open Database License (openstreetmap.org/copyright). " +
-                "Rendering: MapLibre Native. Labels: Noto Sans (SIL OFL)."
+                "Rendering: MapLibre Native. Labels: Noto Sans and VT323 (SIL OFL)."
             cell.selectionStyle = .none
         }
         return cell

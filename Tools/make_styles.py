@@ -3,17 +3,19 @@
 
     python3 Tools/make_styles.py
 
-writes App/Resources/Styles/{outline,hatch,solid,minimal}.json.
+writes App/Resources/Styles/{outline,hatch,solid,minimal,screen}.json.
 
-All four styles read OpenMapTiles-schema vector tiles (what Planetiler
-produces) and share the same navigation layers. The visual system is two
-colours on black: CYAN for the map, RED only for the destination.
+All five styles read OpenMapTiles-schema vector tiles (what Planetiler
+produces) and share the same navigation layers. The first four use two
+colours on black: CYAN for the map, RED only for the destination. SCREEN
+is the inverse, "monitor" look (see screen_style()).
 
 Placeholders filled in by the app at runtime (see StyleComposer.swift):
   {TILES}   file URL of a pack's map.pmtiles (the "omt" source is
             duplicated once per installed pack)
   {GLYPHS}  file URL of the bundled glyph directory
-Images added at runtime (MapView.swift): "hatch", "hatch-water", "chevron".
+Images added at runtime (MapImages.swift): "hatch", "hatch-water",
+"chevron", and for SCREEN "hatch-dark" and "chevron-navy".
 
 How the route stands out from other roads (the most important rule of the
 design):
@@ -36,7 +38,17 @@ FONT = ["Noto Sans Regular"]
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "App", "Resources", "Styles")
 
-MODES = ["outline", "hatch", "solid", "minimal"]
+MODES = ["outline", "hatch", "solid", "minimal", "screen"]
+
+# SCREEN mode: the look of the phone map in Alan Walker's "Alone" video -
+# a bright cyan screen, navy line work, royal-indigo water, a pixel font and
+# one warm accent (coral) for the route and the destination ring.
+SCREEN_BG = "#3ADCE8"
+SCREEN_INK = "#0B1650"
+SCREEN_WATER = "#2233B8"
+SCREEN_WATER_EDGE = "#15218C"
+SCREEN_ACCENT = "#FF6B7E"
+SCREEN_FONT = ["Screen Mono"]   # VT323 merged over Noto Sans, see Tools/make_glyphs.py
 
 
 def zoom(base, *stops):
@@ -364,7 +376,72 @@ WORLD = {"type": "FeatureCollection", "features": [{"type": "Feature", "properti
     "type": "Polygon", "coordinates": [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]]]}}]}
 
 
+def recolor(obj, mapping):
+    """Copy of a style fragment with colour strings swapped."""
+    if isinstance(obj, dict):
+        return {k: recolor(v, mapping) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [recolor(v, mapping) for v in obj]
+    if isinstance(obj, str) and obj.upper() in mapping:
+        return mapping[obj.upper()]
+    return obj
+
+
+def screen_style():
+    """SCREEN: the SOLID layout (same layers, widths and zoom rules) with the
+    palette inverted, the pixel font, and a coral route and destination.
+
+    The route stays the most visible thing on the map: coral is the only
+    warm colour, the route is a coral line inside a navy band with a coral
+    glow, and the navy chevrons are on it alone."""
+    style = recolor(build("solid"), {CYAN.upper(): SCREEN_INK, BLACK.upper(): SCREEN_BG})
+    for layer in style["layers"]:
+        lid, paint, layout = layer["id"], layer.get("paint", {}), layer.get("layout", {})
+        if "text-font" in layout:
+            layout["text-font"] = SCREEN_FONT
+        if lid == "water-fill":
+            paint.update({"fill-color": SCREEN_WATER, "fill-opacity": 1.0})
+        elif lid == "water-edge":
+            paint.update({"line-color": SCREEN_WATER_EDGE, "line-opacity": 1.0})
+        elif lid in ("landcover-fill", "park-fill", "landuse-fill"):
+            paint.pop("fill-color", None)
+            paint.pop("fill-opacity", None)
+            paint["fill-pattern"] = "hatch-dark"
+            layer["minzoom"] = 10
+        elif lid == "waterway":
+            paint.update({"line-color": SCREEN_WATER, "line-opacity": 1.0})
+        elif lid == "building-fill":
+            # line work, not grey blocks: buildings are outlines with a faint tint
+            paint["fill-opacity"] = lin(14, 0.0, 16, 0.06)
+        elif lid == "route-glow":
+            paint.update({"line-color": SCREEN_ACCENT, "line-opacity": 0.5})
+        elif lid == "route-gap":
+            paint["line-color"] = SCREEN_INK
+        elif lid == "route-core":
+            paint["line-color"] = SCREEN_ACCENT
+        elif lid == "route-arrows":
+            layout["icon-image"] = "chevron-navy"
+        elif lid == "dest-halo":
+            # the soft coral ring from the video
+            paint.update({"circle-color": SCREEN_ACCENT, "circle-opacity": 0.3, "circle-blur": 0.6,
+                          "circle-radius": zoom(1.3, 10, 18, 18, 30)})
+        elif lid == "dest-dot":
+            # a donut: screen-coloured centre so it reads as a ring even
+            # where the coral route ends inside it
+            paint.update({"circle-color": SCREEN_BG, "circle-opacity": 1.0,
+                          "circle-stroke-color": SCREEN_ACCENT, "circle-stroke-width": 6,
+                          "circle-radius": zoom(1.3, 10, 9, 18, 14)})
+        elif lid == "dest-center":
+            paint["circle-color"] = SCREEN_INK
+    style["name"] = "TRACE//ZERO screen"
+    style["metadata"]["tracezero:mode"] = "screen"
+    style["metadata"]["tracezero:overlay"] = "scanlines"   # MapController adds the screen texture
+    return style
+
+
 def build(mode):
+    if mode == "screen":
+        return screen_style()
     layers = []
     layers += background()
     layers += greens(mode)

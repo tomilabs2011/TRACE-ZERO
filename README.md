@@ -11,13 +11,16 @@ Nothing talks to a server. Maps, routing and search come from **map packs**
 <img src="docs/images/outline-nav.png" width="200" alt="Navigating: the route glows over a dimmed map">
 <img src="docs/images/solid-nav.png" width="200" alt="Solid mode while navigating">
 <img src="docs/images/minimal-nav.png" width="200" alt="Minimal mode while navigating">
+<img src="docs/images/screen-nav.png" width="200" alt="SCREEN mode while navigating">
 </p>
 
 ## What it does
 
 - **Vector map in black and `#00CCFF`**, four render modes: outline
   (wireframe), diagonal hatch, solid and minimal. Red is used only for the
-  destination.
+  destination. A fifth mode, **SCREEN**, inverts the look into a bright
+  cyan "monitor" with navy lines, indigo water, a pixel font, scanlines and
+  a coral route.
 - **A route you cannot confuse with a road.** It is wider than any road,
   drawn as glow + black gap + bright core with black direction chevrons,
   and the rest of the map dims while you navigate. The part already driven

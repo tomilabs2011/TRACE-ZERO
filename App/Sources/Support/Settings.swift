@@ -2,7 +2,7 @@ import Foundation
 
 /// Map render modes. Each one is a style file in Resources/Styles.
 enum RenderMode: String, CaseIterable {
-    case outline, hatch, solid, minimal
+    case outline, hatch, solid, minimal, screen
 
     var title: String {
         switch self {
@@ -10,6 +10,18 @@ enum RenderMode: String, CaseIterable {
         case .hatch: return "HATCH"
         case .solid: return "SOLID"
         case .minimal: return "MINIMAL"
+        case .screen: return "SCREEN"
+        }
+    }
+
+    /// One line for the Settings list.
+    var detail: String {
+        switch self {
+        case .outline: return "Wireframe roads, outlined areas"
+        case .hatch: return "Diagonal hatching for water and parks"
+        case .solid: return "Filled areas, solid roads"
+        case .minimal: return "Roads and water only; fastest and most frugal"
+        case .screen: return "Light monitor look: cyan screen, navy lines, pixel font"
         }
     }
 }

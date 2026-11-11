@@ -16,7 +16,7 @@ npm install maplibre-gl@4.7.1 geojson-vt@4.0.2 vt-pbf@3.1.3 playwright
 ../../Forge/tzforge build ../../Tests/data/helsinki.osm.pbf /tmp/hel.vmap
 ../../Forge/tzforge route /tmp/hel.vmap car "60.1712,24.9396" "60.1665,24.9505" --geojson > route.geojson
 node server.cjs "$PWD/node_modules" "$PWD" "$PWD/../../App/Resources" 8765 &
-open "http://127.0.0.1:8765/index.html?mode=outline&nav=1"   # mode: outline|hatch|solid|minimal
+open "http://127.0.0.1:8765/index.html?mode=outline&nav=1"   # mode: outline|hatch|solid|minimal|screen
 OUT=. node shoot.cjs outline:0 outline:1 solid:1             # optional screenshots
 ```
 

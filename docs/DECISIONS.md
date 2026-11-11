@@ -68,6 +68,14 @@ CarPlay entitlement without Apple's approval.
 **Generated Xcode projects.** `Tools/gen_xcodeproj.py` writes both
 projects, so the project settings are readable code and survive merges.
 
+**SCREEN as a fifth style, not a theme.** The light "monitor" look is one
+more style JSON generated from SOLID, so the four dark styles stay
+untouched and the route rules still apply. Its pixel font is shipped as
+MapLibre glyph files ("Screen Mono", VT323 merged over Noto) instead of a
+font fallback stack, because a local glyph URL cannot combine two font
+directories. The scanlines are a UIView pattern, not a style layer, so
+they cost nothing per frame. The app's panels stay black and cyan.
+
 ## What has been verified, and how
 
 Done in a Linux container, without a Mac:
