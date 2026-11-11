@@ -82,10 +82,11 @@ The result is `build/TraceZero.ipa`. Install it any way you like:
 
 - copy it to the phone and open it with Filza (needs AppSync Unified), or
 - with libimobiledevice: `brew install libimobiledevice ideviceinstaller`
-  and then run the command below.
+  and then run the command below (older versions of the tool use
+  `ideviceinstaller -i` instead of `install`).
 
 ```bash
-ideviceinstaller -i build/TraceZero.ipa
+ideviceinstaller install build/TraceZero.ipa
 ```
 
 To update, build and install again. Your map packs and settings stay.

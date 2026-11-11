@@ -13,7 +13,7 @@
 # which a jailbroken phone with AppSync Unified accepts. Unlike a free Apple
 # ID signature this never expires, and it can carry the CarPlay entitlement
 # that Apple only grants on request. Needs Xcode and `brew install ldid`.
-# Install the result with Filza, `ideviceinstaller -i build/TraceZero.ipa`,
+# Install the result with Filza, `ideviceinstaller install build/TraceZero.ipa`,
 # or any IPA installer. See docs/INSTALL.md.
 set -euo pipefail
 
